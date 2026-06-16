@@ -710,9 +710,18 @@ namespace ego_planner
     nh.param("optimization/max_vel", max_vel_, -1.0);
     nh.param("optimization/max_acc", max_acc_, -1.0);
 
-    // set the formation type
+    std::vector<Eigen::Vector3d> positions;
+    for (int i = 0; i < 7; i++)
+    {
+      double x, y, z;
+      nh.param("global_goal/relative_pos_" + to_string(i) + "/x", x, 0.0);
+      nh.param("global_goal/relative_pos_" + to_string(i) + "/y", y, 0.0);
+      nh.param("global_goal/relative_pos_" + to_string(i) + "/z", z, 0.0);
+      positions.emplace_back(x, y, z);
+    }
+
     swarm_graph_.reset(new SwarmGraph);
-    setDesiredFormation(formation_type_);
+    setDesiredFormation(formation_type_, positions);
   }
 
   void PolyTrajOptimizer::setEnvironment(const GridMap::Ptr& map)

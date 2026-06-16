@@ -84,6 +84,7 @@ namespace ego_planner
     int formation_size_;
     bool use_formation_ = true;
     bool is_other_assigning_ = false;
+    std::vector<Eigen::Vector3d> formation_positions_; // read from config
 
     double t_now_;
 
@@ -158,9 +159,8 @@ namespace ego_planner
 
     bool getFormationPos(std::vector<Eigen::Vector3d>& swarm_graph_pos, Eigen::Vector3d pos);
 
-    void setDesiredFormation(int type)
+    void setDesiredFormation(int type, const std::vector<Eigen::Vector3d>& positions)
     {
-      std::vector<Eigen::Vector3d> swarm_des;
       switch (type)
       {
       case FORMATION_TYPE::NONE_FORMATION:
@@ -172,26 +172,10 @@ namespace ego_planner
 
       case FORMATION_TYPE::REGULAR_HEXAGON:
       {
-        // set the desired formation
-        Eigen::Vector3d v0(0, 0, 0);
-        Eigen::Vector3d v1(1.7321, -1, 0);
-        Eigen::Vector3d v2(0, -2, 0);
-        Eigen::Vector3d v3(-1.7321, -1, 0);
-        Eigen::Vector3d v4(-1.7321, 1, 0);
-        Eigen::Vector3d v5(0, 2, 0);
-        Eigen::Vector3d v6(1.7321, 1, 0);
-
-        swarm_des.push_back(v0);
-        swarm_des.push_back(v1);
-        swarm_des.push_back(v2);
-        swarm_des.push_back(v3);
-        swarm_des.push_back(v4);
-        swarm_des.push_back(v5);
-        swarm_des.push_back(v6);
-
-        formation_size_ = swarm_des.size();
+        formation_positions_ = positions;
+        formation_size_ = positions.size();
         // construct the desired swarm graph
-        swarm_graph_->setDesiredForm(swarm_des);
+        swarm_graph_->setDesiredForm(positions);
         break;
       }
 
@@ -201,6 +185,9 @@ namespace ego_planner
     }
 
   public:
+    std::vector<Eigen::Vector3d> getFormationPositions() const { return formation_positions_; }
+
+
     typedef unique_ptr<PolyTrajOptimizer> Ptr;
   };
 
