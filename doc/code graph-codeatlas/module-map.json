@@ -1,0 +1,222 @@
+{
+  "project": "Swarm-Formation",
+  "source": "/home/ronghai/swarm-formation",
+  "modules": [
+    {
+      "name": "path_searching",
+      "role": "Path searching algorithms including A* search for navigation in grid maps"
+    },
+    {
+      "name": "plan_env",
+      "role": "Planning environment providing grid map and raycast utilities for spatial reasoning"
+    },
+    {
+      "name": "ego_planner",
+      "role": "Main planner management package implementing FSM and planner manager for trajectory planning"
+    },
+    {
+      "name": "swarm_bridge",
+      "role": "Swarm communication bridge for inter-robot communication and coordination"
+    },
+    {
+      "name": "swarm_graph",
+      "role": "Swarm graph utilities for managing formation topology and interaction graphs"
+    },
+    {
+      "name": "traj_opt",
+      "role": "Trajectory optimization package for generating smooth, collision-free trajectories"
+    },
+    {
+      "name": "traj_utils",
+      "role": "Trajectory utilities providing common data structures and message definitions"
+    },
+    {
+      "name": "fake_drone",
+      "role": "Fake drone simulation for testing without real hardware"
+    },
+    {
+      "name": "local_sensing",
+      "role": "Local sensing simulation for simulating sensor data"
+    },
+    {
+      "name": "map_generator",
+      "role": "Map generation utilities for creating environment maps"
+    },
+    {
+      "name": "mockamap",
+      "role": "Mock map generation for creating synthetic environments"
+    },
+    {
+      "name": "so3_control",
+      "role": "SO3 control algorithms for quadrotor attitude control"
+    },
+    {
+      "name": "so3_quadrotor_simulator",
+      "role": "Quadrotor simulator implementing physics dynamics"
+    },
+    {
+      "name": "odom_visualization",
+      "role": "Odometry visualization for RViz display"
+    },
+    {
+      "name": "pose_utils",
+      "role": "Pose utilities for handling orientation and position data"
+    },
+    {
+      "name": "quadrotor_msgs",
+      "role": "Quadrotor message definitions for ROS communication"
+    },
+    {
+      "name": "rviz_plugins",
+      "role": "RViz plugins for enhanced visualization capabilities"
+    },
+    {
+      "name": "uav_utils",
+      "role": "UAV utilities providing common functions for drone operations"
+    }
+  ],
+  "relations": [
+    {
+      "source": "path_searching",
+      "target": "plan_env",
+      "type": "depends_on",
+      "reason": "path_searching uses grid_map from plan_env for occupancy checks"
+    },
+    {
+      "source": "ego_planner",
+      "target": "plan_env",
+      "type": "depends_on",
+      "reason": "ego_planner uses plan_env for environment representation"
+    },
+    {
+      "source": "ego_planner",
+      "target": "path_searching",
+      "type": "depends_on",
+      "reason": "ego_planner uses path_searching for initial path generation"
+    },
+    {
+      "source": "ego_planner",
+      "target": "traj_opt",
+      "type": "depends_on",
+      "reason": "ego_planner uses traj_opt for trajectory optimization"
+    },
+    {
+      "source": "ego_planner",
+      "target": "traj_utils",
+      "type": "depends_on",
+      "reason": "ego_planner uses traj_utils for message definitions and utilities"
+    },
+    {
+      "source": "swarm_bridge",
+      "target": "traj_utils",
+      "type": "depends_on",
+      "reason": "swarm_bridge uses traj_utils for message definitions"
+    },
+    {
+      "source": "traj_opt",
+      "target": "plan_env",
+      "type": "depends_on",
+      "reason": "traj_opt uses plan_env for environment information"
+    },
+    {
+      "source": "traj_opt",
+      "target": "path_searching",
+      "type": "depends_on",
+      "reason": "traj_opt uses path_searching for path reference"
+    },
+    {
+      "source": "traj_opt",
+      "target": "traj_utils",
+      "type": "depends_on",
+      "reason": "traj_opt uses traj_utils for common data structures"
+    },
+    {
+      "source": "traj_opt",
+      "target": "swarm_graph",
+      "type": "depends_on",
+      "reason": "traj_opt uses swarm_graph for formation topology"
+    },
+    {
+      "source": "ego_planner",
+      "target": "swarm_bridge",
+      "type": "runtime_flow",
+      "reason": "ego_planner communicates with other robots through swarm_bridge"
+    },
+    {
+      "source": "ego_planner",
+      "target": "swarm_graph",
+      "type": "runtime_flow",
+      "reason": "ego_planner manages formation topology using swarm_graph"
+    },
+    {
+      "source": "so3_quadrotor_simulator",
+      "target": "so3_control",
+      "type": "depends_on",
+      "reason": "so3_quadrotor_simulator uses so3_control for attitude control"
+    },
+    {
+      "source": "so3_quadrotor_simulator",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "so3_quadrotor_simulator uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "so3_control",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "so3_control uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "odom_visualization",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "odom_visualization uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "odom_visualization",
+      "target": "rviz_plugins",
+      "type": "depends_on",
+      "reason": "odom_visualization uses rviz_plugins for visualization"
+    },
+    {
+      "source": "fake_drone",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "fake_drone uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "local_sensing",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "local_sensing uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "map_generator",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "map_generator uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "mockamap",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "mockamap uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "pose_utils",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "pose_utils uses quadrotor_msgs for message definitions"
+    },
+    {
+      "source": "uav_utils",
+      "target": "quadrotor_msgs",
+      "type": "imports",
+      "reason": "uav_utils uses quadrotor_msgs for message definitions"
+    }
+  ],
+  "entrypoints": [
+    "roslaunch ego_planner rviz.launch",
+    "roslaunch ego_planner normal_hexagon.launch"
+  ]
+}
