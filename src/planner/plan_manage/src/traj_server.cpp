@@ -102,7 +102,7 @@ void finishCallback(const std_msgs::Bool::ConstPtr& msg) {
     std::string str_time = ss.str();
     result_file << str_time << "\n";
     double max_vel2 = 0;
-    for (int i = 0; i < time_vec_.size(); i++) {
+    for (size_t i = 0; i < time_vec_.size(); i++) {
       double tmp_vel2 = (vel_vec_[i](0))*(vel_vec_[i](0)) + (vel_vec_[i](1))*(vel_vec_[i](1)) + (vel_vec_[i](2))*(vel_vec_[i](2));
       max_vel2 = (tmp_vel2 > max_vel2) ? tmp_vel2 : max_vel2; 
     }

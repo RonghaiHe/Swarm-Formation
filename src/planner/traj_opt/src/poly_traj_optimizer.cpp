@@ -24,9 +24,7 @@ namespace ego_planner
     double final_cost;
     variable_num_ = 4 * (piece_num_ - 1) + 1;
 
-    ros::Time t0 = ros::Time::now(), t1, t2;
-    int restart_nums = 0, rebound_times = 0;
-    bool flag_force_return, flag_still_occ;
+    ros::Time t1, t2;
     bool use_formation_temp = use_formation_;
 
     double q[variable_num_];
@@ -56,14 +54,14 @@ namespace ego_planner
     }
 
     iter_num_ = 0;
-    flag_force_return = false;
+    // flag_force_return = false;
     force_stop_type_ = DONT_STOP;
-    flag_still_occ = false;
+    // flag_still_occ = false;
     /* ---------- optimize ---------- */
 
     t1 = ros::Time::now();
 
-    int result = lbfgs::lbfgs_optimize(
+    lbfgs::lbfgs_optimize(
         variable_num_,
         q,
         &final_cost,
@@ -81,7 +79,7 @@ namespace ego_planner
 
     t2 = ros::Time::now();
     double time_ms = (t2 - t1).toSec() * 1000;
-    double total_time_ms = (t2 - t0).toSec() * 1000;
+    // double total_time_ms = (t2 - t0).toSec() * 1000;
 
     printf("\033[32miter=%d, use_formation=%d, time(ms)=%5.3f, \n\033[0m", iter_num_, use_formation, time_ms);
     // ROS_WARN("The optimization result is : %s", lbfgs::lbfgs_strerror(result));
@@ -408,9 +406,9 @@ namespace ego_planner
     swarm_graph_pos[drone_id_] = p;
     swarm_graph_vel[drone_id_] = v;
 
-    for (size_t id = 0; id < size; id++)
+    for (size_t id = 0; id < (size_t)size; id++)
     {
-      if (id == drone_id_)
+      if (id == (size_t)drone_id_)
         continue;
 
       double traj_i_satrt_time = swarm_trajs_->at(id).start_time;
@@ -448,10 +446,10 @@ namespace ego_planner
 
       gradp = wei_formation_ * swarm_grad[drone_id_];
 
-      for (size_t id = 0; id < size; id++)
+      for (size_t id = 0; id < (size_t)size; id++)
       {
         gradt += wei_formation_ * swarm_grad[id].dot(swarm_graph_vel[id]);
-        if (id != drone_id_)
+        if (id != (size_t)drone_id_)
           grad_prev_t += wei_formation_ * swarm_grad[id].dot(swarm_graph_vel[id]);
       }
     }
@@ -658,7 +656,7 @@ namespace ego_planner
     int debug_num = 0;
     do
     {
-      for (size_t i = 1; i <= piece_num; ++i)
+      for (int i = 1; i <= piece_num; ++i)
       {
         time_vec(i - 1) = (i == 1) ? (simple_path[1] - start_pos).norm() / des_vel
                                    : (simple_path[i] - simple_path[i - 1]).norm() / des_vel;
@@ -676,7 +674,7 @@ namespace ego_planner
 
   bool PolyTrajOptimizer::getFormationPos(vector<Eigen::Vector3d> &swarm_graph_pos, Eigen::Vector3d pos)
   {
-    if (swarm_trajs_->size() < formation_size_ || !use_formation_)
+    if (swarm_trajs_->size() < (size_t)formation_size_ || !use_formation_)
     {
       return false;
     }
@@ -717,7 +715,7 @@ namespace ego_planner
     if (!is_show)
       return;
 
-    if (swarm_trajs_->size() < formation_size_ || drone_id_ != 0 || !use_formation_)
+    if (swarm_trajs_->size() < (size_t)formation_size_ || drone_id_ != 0 || !use_formation_)
     {
       return;
     }

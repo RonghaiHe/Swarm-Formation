@@ -338,7 +338,7 @@ namespace ego_planner
 
         if (dist < CLEARANCE)
         {
-          ROS_WARN("swarm distance between drone %d and drone %d is %f, too close!",
+          ROS_WARN("swarm distance between drone %d and drone %zu is %f, too close!",
                    planner_manager_->pp_.drone_id, id, dist);
           t_temp = t;
           occ = true;
@@ -760,7 +760,7 @@ namespace ego_planner
 
   bool EGOReplanFSM::planFromLocalTraj(bool flag_use_poly_init, bool use_formation)
   {
-    double t_debug_start = ros::Time::now().toSec();
+    // double t_debug_start = ros::Time::now().toSec();
     LocalTrajData *info = &planner_manager_->traj_.local_traj;
     double t_cur = ros::Time::now().toSec() - info->start_time;
 
@@ -786,7 +786,7 @@ namespace ego_planner
         local_target_pt_, local_target_vel_);
 
     Eigen::Vector3d desired_start_pt, desired_start_vel, desired_start_acc;
-    double desired_start_time;
+    double desired_start_time = 0.0;
     if (have_local_traj_ && use_formation)
     {
       desired_start_time = ros::Time::now().toSec() + replan_trajectory_time_;
