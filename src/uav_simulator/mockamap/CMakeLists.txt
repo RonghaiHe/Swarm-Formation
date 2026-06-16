@@ -14,9 +14,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  pcl_ros
-  pcl_conversions
 )
+find_package(pcl_ros REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -110,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES mockamap
-  CATKIN_DEPENDS roscpp pcl_ros pcl_conversions
+  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
 
@@ -123,6 +124,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -156,6 +158,7 @@ add_executable(${PROJECT_NAME}_node
 ## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
  )
 
 #############

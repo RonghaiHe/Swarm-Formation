@@ -30,13 +30,14 @@ if(ENABLE_CUDA)
   find_package(Boost REQUIRED COMPONENTS system filesystem)
 
   find_package(catkin REQUIRED COMPONENTS
-      roscpp roslib cmake_modules cv_bridge image_transport pcl_ros sensor_msgs geometry_msgs nav_msgs quadrotor_msgs dynamic_reconfigure)
+      roscpp roslib cmake_modules cv_bridge image_transport sensor_msgs geometry_msgs nav_msgs quadrotor_msgs dynamic_reconfigure)
+  find_package(pcl_ros REQUIRED)
   generate_dynamic_reconfigure_options(
     cfg/local_sensing_node.cfg
   )
   catkin_package(
       DEPENDS OpenCV Eigen Boost
-      CATKIN_DEPENDS roscpp roslib image_transport pcl_ros
+      CATKIN_DEPENDS roscpp roslib image_transport
   #INCLUDE_DIRS include
       LIBRARIES depth_render_cuda
   )
@@ -66,18 +67,21 @@ if(ENABLE_CUDA)
   )
 else(ENABLE_CUDA)
   find_package(Eigen3 REQUIRED)
+  find_package(PCL REQUIRED)
   find_package(catkin REQUIRED COMPONENTS
-      roscpp roslib cmake_modules pcl_ros sensor_msgs geometry_msgs nav_msgs quadrotor_msgs)
+      roscpp roslib cmake_modules sensor_msgs geometry_msgs nav_msgs quadrotor_msgs)
+  find_package(pcl_ros REQUIRED)
   
   catkin_package(
       DEPENDS Eigen
-      CATKIN_DEPENDS roscpp roslib pcl_ros
+      CATKIN_DEPENDS roscpp roslib
   )
 
   include_directories(
     SYSTEM 
     ${catkin_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS}.
+    ${Eigen_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
   )
 
   add_executable(
@@ -88,5 +92,6 @@ else(ENABLE_CUDA)
   target_link_libraries( pcl_render_node
     ${catkin_LIBRARIES}
     ${PCL_LIBRARIES}
+    ${pcl_ros_LIBRARIES}
   )
 endif(ENABLE_CUDA)

@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
-  pcl_conversions
 )
+find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
