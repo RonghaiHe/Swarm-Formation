@@ -38,22 +38,30 @@ std::fstream result_file;
 std::vector<Eigen::Vector3d> pos_vec_, vel_vec_, acc_vec_, jerk_vec_;
 std::vector<double> time_vec_;
 
-const std::vector<std::string> explode(const std::string& s, const char& c)
+const std::vector<std::string>
+explode(const std::string& s, const char& c)
 {
   std::string buff{""};
   std::vector<std::string> v;
-  
-  for(auto n:s)
+
+  for (auto n : s)
   {
-    if(n != c) buff+=n; else
-    if(n == c && buff != "") { v.push_back(buff); buff = ""; }
+    if (n != c)
+      buff += n;
+    else if (n == c && buff != "")
+    {
+      v.push_back(buff);
+      buff = "";
+    }
   }
-  if(buff != "") v.push_back(buff);
-  
+  if (buff != "")
+    v.push_back(buff);
+
   return v;
 }
 
-void polyTrajCallback(traj_utils::PolyTrajPtr msg)
+void
+polyTrajCallback(traj_utils::PolyTrajPtr msg)
 {
   if (msg->order != 5)
   {
@@ -72,12 +80,9 @@ void polyTrajCallback(traj_utils::PolyTrajPtr msg)
   for (int i = 0; i < piece_nums; ++i)
   {
     int i6 = i * 6;
-    cMats[i].row(0) << msg->coef_x[i6 + 0], msg->coef_x[i6 + 1], msg->coef_x[i6 + 2],
-        msg->coef_x[i6 + 3], msg->coef_x[i6 + 4], msg->coef_x[i6 + 5];
-    cMats[i].row(1) << msg->coef_y[i6 + 0], msg->coef_y[i6 + 1], msg->coef_y[i6 + 2],
-        msg->coef_y[i6 + 3], msg->coef_y[i6 + 4], msg->coef_y[i6 + 5];
-    cMats[i].row(2) << msg->coef_z[i6 + 0], msg->coef_z[i6 + 1], msg->coef_z[i6 + 2],
-        msg->coef_z[i6 + 3], msg->coef_z[i6 + 4], msg->coef_z[i6 + 5];
+    cMats[i].row(0) << msg->coef_x[i6 + 0], msg->coef_x[i6 + 1], msg->coef_x[i6 + 2], msg->coef_x[i6 + 3], msg->coef_x[i6 + 4], msg->coef_x[i6 + 5];
+    cMats[i].row(1) << msg->coef_y[i6 + 0], msg->coef_y[i6 + 1], msg->coef_y[i6 + 2], msg->coef_y[i6 + 3], msg->coef_y[i6 + 4], msg->coef_y[i6 + 5];
+    cMats[i].row(2) << msg->coef_z[i6 + 0], msg->coef_z[i6 + 1], msg->coef_z[i6 + 2], msg->coef_z[i6 + 3], msg->coef_z[i6 + 4], msg->coef_z[i6 + 5];
 
     dura[i] = msg->duration[i];
   }
@@ -91,9 +96,13 @@ void polyTrajCallback(traj_utils::PolyTrajPtr msg)
   receive_traj_ = true;
 }
 
-void finishCallback(const std_msgs::Bool::ConstPtr& msg) {
-  if (msg->data == true) {
-    ROS_WARN("total_time, cnt, acc2_inter, jerk2_inter = %lf \t %d \t %lf \t %lf", (ros::Time::now() - global_start_time).toSec(), cnt, acc2_inter, jerk2_inter);
+void
+finishCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  if (msg->data == true)
+  {
+    ROS_WARN("total_time, cnt, acc2_inter, jerk2_inter = %lf \t %d \t %lf \t %lf", (ros::Time::now() - global_start_time).toSec(), cnt, acc2_inter,
+             jerk2_inter);
     // ROS_WARN("time.size = %d, %d, %d, %d", time_vec_.size(), vel_vec_.size(), acc_vec_.size(), jerk_vec_.size());
     auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     //转为字符串
@@ -102,23 +111,28 @@ void finishCallback(const std_msgs::Bool::ConstPtr& msg) {
     std::string str_time = ss.str();
     result_file << str_time << "\n";
     double max_vel2 = 0;
-    for (size_t i = 0; i < time_vec_.size(); i++) {
-      double tmp_vel2 = (vel_vec_[i](0))*(vel_vec_[i](0)) + (vel_vec_[i](1))*(vel_vec_[i](1)) + (vel_vec_[i](2))*(vel_vec_[i](2));
-      max_vel2 = (tmp_vel2 > max_vel2) ? tmp_vel2 : max_vel2; 
+    for (size_t i = 0; i < time_vec_.size(); i++)
+    {
+      double tmp_vel2 = (vel_vec_[i](0)) * (vel_vec_[i](0)) + (vel_vec_[i](1)) * (vel_vec_[i](1)) + (vel_vec_[i](2)) * (vel_vec_[i](2));
+      max_vel2 = (tmp_vel2 > max_vel2) ? tmp_vel2 : max_vel2;
     }
     result_file << "max_vel = " << sqrt(max_vel2) << "\n";
-    result_file << "\n"; 
+    result_file << "\n";
   }
 }
 
-void startCallback(const std_msgs::Bool::ConstPtr& msg) {
-  if (msg->data == true) {
+void
+startCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  if (msg->data == true)
+  {
     ROS_WARN("START!!!!");
     global_start_time = ros::Time::now();
   }
 }
 
-std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros::Time &time_now, ros::Time &time_last)
+std::pair<double, double>
+calculate_yaw(double t_cur, Eigen::Vector3d& pos, ros::Time& time_now, ros::Time& time_last)
 {
   constexpr double PI = 3.1415926;
   constexpr double YAW_DOT_MAX_PER_SEC = PI;
@@ -127,12 +141,8 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
   double yaw = 0;
   double yawdot = 0;
 
-  Eigen::Vector3d dir = t_cur + time_forward_ <= traj_duration_
-                            ? traj_->getPos(t_cur + time_forward_) - pos
-                            : traj_->getPos(traj_duration_) - pos;
-  double yaw_temp = dir.norm() > 0.1
-                        ? atan2(dir(1), dir(0))
-                        : last_yaw_;
+  Eigen::Vector3d dir = t_cur + time_forward_ <= traj_duration_ ? traj_->getPos(t_cur + time_forward_) - pos : traj_->getPos(traj_duration_) - pos;
+  double yaw_temp = dir.norm() > 0.1 ? atan2(dir(1), dir(0)) : last_yaw_;
   double max_yaw_change = YAW_DOT_MAX_PER_SEC * (time_now - time_last).toSec();
   if (yaw_temp - last_yaw_ > PI)
   {
@@ -214,7 +224,8 @@ std::pair<double, double> calculate_yaw(double t_cur, Eigen::Vector3d &pos, ros:
   return yaw_yawdot;
 }
 
-void cmdCallback(const ros::TimerEvent &e)
+void
+cmdCallback(const ros::TimerEvent& e)
 {
   /* no publishing before receive traj_ */
   if (!receive_traj_)
@@ -228,13 +239,15 @@ void cmdCallback(const ros::TimerEvent &e)
   std::pair<double, double> yaw_yawdot(0, 0);
 
   static ros::Time time_last = ros::Time::now();
-  if (flag == false) {
+  if (flag == false)
+  {
     flag = true;
-  } else {
+  }
+  else
+  {
     cnt++;
-    acc2_inter += last_acc.norm()*last_acc.norm()*(time_now-time_last).toSec();
-    jerk2_inter += last_jerk.norm()*last_jerk.norm()*(time_now-time_last).toSec();
-    
+    acc2_inter += last_acc.norm() * last_acc.norm() * (time_now - time_last).toSec();
+    jerk2_inter += last_jerk.norm() * last_jerk.norm() * (time_now - time_last).toSec();
   }
   if (t_cur < traj_duration_ && t_cur >= 0.0)
   {
@@ -284,7 +297,7 @@ void cmdCallback(const ros::TimerEvent &e)
   cmd.position.x = pos(0);
   cmd.position.y = pos(1);
   cmd.position.z = pos(2);
-  
+
   cmd.velocity.x = vel(0);
   cmd.velocity.y = vel(1);
   cmd.velocity.z = vel(2);
@@ -301,7 +314,8 @@ void cmdCallback(const ros::TimerEvent &e)
   pos_cmd_pub.publish(cmd);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
   ros::init(argc, argv, "traj_server");
   // ros::NodeHandle node;
@@ -310,13 +324,13 @@ int main(int argc, char **argv)
   std::string name_drone = ros::this_node::getName();
   std::vector<std::string> v{explode(name_drone, '_')};
   // drone_id_ = std::stoi(v[1]);
-  result_file.open(result_dir+v[1]+"_vaj.txt", std::ios::out);
+  result_file.open(result_dir + v[1] + "_vaj.txt", std::ios::out);
 
   ros::Subscriber poly_traj_sub = nh.subscribe("planning/trajectory", 10, polyTrajCallback);
   ros::Subscriber reached_sub = nh.subscribe("planning/finish", 10, finishCallback);
   ros::Subscriber start_sub = nh.subscribe("planning/start", 10, startCallback);
   pos_cmd_pub = nh.advertise<quadrotor_msgs::PositionCommand>("/position_cmd", 50);
-  
+
 
   ros::Timer cmd_timer = nh.createTimer(ros::Duration(0.01), cmdCallback);
 

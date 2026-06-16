@@ -1,0 +1,64 @@
+---
+# Conservative config - minimal changes to existing codebase
+BasedOnStyle: Mozilla
+
+# Indentation
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ContinuationIndentWidth: 4
+NamespaceIndentation: All
+AccessModifierOffset: -2
+
+# Braces - Allman (dominant style)
+BreakBeforeBraces: Allman
+IndentCaseLabels: false
+
+# Column limit - high to avoid reformatting long lines
+ColumnLimit: 150
+
+# Alignment - conservative to avoid adding padding
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignTrailingComments: true
+
+# Short forms
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
+
+# Includes - don't reorder
+SortIncludes: false
+
+# Pointer/reference
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Spaces
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: Never
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Constructor initializers
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+
+# Other
+BinPackArguments: true
+BinPackParameters: true
+Cpp11BracedListStyle: true
+FixNamespaceComments: false
+MaxEmptyLinesToKeep: 2
+ReflowComments: false
+...

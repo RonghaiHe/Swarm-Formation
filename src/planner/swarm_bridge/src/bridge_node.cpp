@@ -36,7 +36,8 @@ enum MESSAGE_TYPE
   ONE_TRAJ
 } massage_type_;
 
-int init_broadcast(const char *ip, const int port)
+int
+init_broadcast(const char* ip, const int port)
 {
   int fd;
 
@@ -65,7 +66,8 @@ int init_broadcast(const char *ip, const int port)
   return fd;
 }
 
-int udp_bind_to_port(const int port, int &server_fd)
+int
+udp_bind_to_port(const int port, int& server_fd)
 {
   struct sockaddr_in address;
   int opt = 1;
@@ -78,8 +80,7 @@ int udp_bind_to_port(const int port, int &server_fd)
   }
 
   // Forcefully attaching socket to the port
-  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                 &opt, sizeof(opt)))
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
   {
     perror("setsockopt");
     exit(EXIT_FAILURE);
@@ -89,8 +90,7 @@ int udp_bind_to_port(const int port, int &server_fd)
   address.sin_port = htons(port);
 
   // Forcefully attaching socket to the port
-  if (bind(server_fd, (struct sockaddr *)&address,
-           sizeof(address)) < 0)
+  if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0)
   {
     perror("bind failed");
     exit(EXIT_FAILURE);
@@ -100,9 +100,10 @@ int udp_bind_to_port(const int port, int &server_fd)
 }
 
 template <typename T>
-int serializeTopic(const MESSAGE_TYPE msg_type, const T &msg)
+int
+serializeTopic(const MESSAGE_TYPE msg_type, const T& msg)
 {
-  auto ptr = (uint8_t *)(udp_send_buf_);
+  auto ptr = (uint8_t*)(udp_send_buf_);
 
   *((MESSAGE_TYPE*)ptr) = msg_type;
   ptr += sizeof(MESSAGE_TYPE);
@@ -110,7 +111,7 @@ int serializeTopic(const MESSAGE_TYPE msg_type, const T &msg)
   namespace ser = ros::serialization;
   uint32_t msg_size = ser::serializationLength(msg);
 
-  *((uint32_t *)ptr) = msg_size;
+  *((uint32_t*)ptr) = msg_size;
   ptr += sizeof(uint32_t);
 
   ser::OStream stream(ptr, msg_size);
@@ -120,11 +121,12 @@ int serializeTopic(const MESSAGE_TYPE msg_type, const T &msg)
 }
 
 template <typename T>
-int deserializeTopic(T &msg)
+int
+deserializeTopic(T& msg)
 {
-  auto ptr = (uint8_t *)(udp_recv_buf_ + sizeof(MESSAGE_TYPE));
+  auto ptr = (uint8_t*)(udp_recv_buf_ + sizeof(MESSAGE_TYPE));
 
-  uint32_t msg_size = *((uint32_t *)ptr);
+  uint32_t msg_size = *((uint32_t*)ptr);
   ptr += sizeof(uint32_t);
 
   namespace ser = ros::serialization;
@@ -134,7 +136,8 @@ int deserializeTopic(T &msg)
   return msg_size + sizeof(MESSAGE_TYPE) + sizeof(uint32_t);
 }
 
-void odom_sub_udp_cb(const nav_msgs::OdometryPtr &msg)
+void
+odom_sub_udp_cb(const nav_msgs::OdometryPtr& msg)
 {
 
   static ros::Time t_last;
@@ -149,24 +152,26 @@ void odom_sub_udp_cb(const nav_msgs::OdometryPtr &msg)
 
   int len = serializeTopic(MESSAGE_TYPE::ODOM, *msg);
 
-  if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
+  if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr*)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
   {
     ROS_ERROR("UDP SEND ERROR (1)!!!");
   }
 }
 
-void one_traj_sub_udp_cb(const traj_utils::PolyTrajPtr &msg)
+void
+one_traj_sub_udp_cb(const traj_utils::PolyTrajPtr& msg)
 {
 
   int len = serializeTopic(MESSAGE_TYPE::ONE_TRAJ, *msg);
 
-  if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr *)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
+  if (sendto(udp_send_fd_, udp_send_buf_, len, 0, (struct sockaddr*)&addr_udp_send_, sizeof(addr_udp_send_)) <= 0)
   {
     ROS_ERROR("UDP SEND ERROR (3)!!!");
   }
 }
 
-void udp_recv_fun()
+void
+udp_recv_fun()
 {
   int valread;
   struct sockaddr_in addr_client;
@@ -181,14 +186,14 @@ void udp_recv_fun()
 
   while (true)
   {
-    if ((valread = recvfrom(udp_server_fd_, udp_recv_buf_, BUF_LEN, 0, (struct sockaddr *)&addr_client, (socklen_t *)&addr_len)) < 0)
+    if ((valread = recvfrom(udp_server_fd_, udp_recv_buf_, BUF_LEN, 0, (struct sockaddr*)&addr_client, (socklen_t*)&addr_len)) < 0)
     {
       perror("recvfrom() < 0, error:");
       exit(EXIT_FAILURE);
     }
 
-    char *ptr = udp_recv_buf_;
-    switch (*((MESSAGE_TYPE *)ptr))
+    char* ptr = udp_recv_buf_;
+    switch (*((MESSAGE_TYPE*)ptr))
     {
 
     case MESSAGE_TYPE::ODOM:
@@ -231,7 +236,8 @@ void udp_recv_fun()
   }
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
   ros::init(argc, argv, "swarm_bridge");
   ros::NodeHandle nh("~");

@@ -8,7 +8,7 @@ namespace ego_planner
   {
     result_file_.close();
   }
-  void EGOReplanFSM::init(ros::NodeHandle &nh)
+  void EGOReplanFSM::init(ros::NodeHandle& nh)
   {
     current_wp_ = 0;
     exec_state_ = FSM_EXEC_STATE::INIT;
@@ -72,10 +72,8 @@ namespace ego_planner
     odom_sub_ = nh.subscribe("odom_world", 1, &EGOReplanFSM::odometryCallback, this);
 
     broadcast_ploytraj_pub_ = nh.advertise<traj_utils::PolyTraj>("planning/broadcast_traj_send", 10);
-    broadcast_ploytraj_sub_ = nh.subscribe<traj_utils::PolyTraj>("planning/broadcast_traj_recv", 100,
-                                                                 &EGOReplanFSM::RecvBroadcastPolyTrajCallback,
-                                                                 this,
-                                                                 ros::TransportHints().tcpNoDelay());
+    broadcast_ploytraj_sub_ = nh.subscribe<traj_utils::PolyTraj>("planning/broadcast_traj_recv", 100, &EGOReplanFSM::RecvBroadcastPolyTrajCallback,
+                                                                 this, ros::TransportHints().tcpNoDelay());
 
     poly_traj_pub_ = nh.advertise<traj_utils::PolyTraj>("planning/trajectory", 10);
     data_disp_pub_ = nh.advertise<traj_utils::DataDisp>("planning/data_display", 100);
@@ -120,7 +118,7 @@ namespace ego_planner
     cout << "Wrong target_type_ value! target_type_=" << target_type_ << endl;
   }
 
-  void EGOReplanFSM::execFSMCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::execFSMCallback(const ros::TimerEvent& e)
   {
     exec_timer_.stop(); // To avoid blockage
 
@@ -216,7 +214,7 @@ namespace ego_planner
     case EXEC_TRAJ:
     {
       /* determine if need to replan */
-      LocalTrajData *info = &planner_manager_->traj_.local_traj;
+      LocalTrajData* info = &planner_manager_->traj_.local_traj;
       double t_cur = ros::Time::now().toSec() - info->start_time;
       t_cur = min(info->duration, t_cur);
 
@@ -232,10 +230,10 @@ namespace ego_planner
           /* The navigation task completed */
           changeFSMExecState(WAIT_TARGET, "FSM");
 
-          result_file_ << planner_manager_->pp_.drone_id << "\t" << (ros::Time::now() - planner_manager_->global_start_time_).toSec() << "\t" << planner_manager_->average_plan_time_ << "\n";
+          result_file_ << planner_manager_->pp_.drone_id << "\t" << (ros::Time::now() - planner_manager_->global_start_time_).toSec() << "\t"
+                       << planner_manager_->average_plan_time_ << "\n";
 
-          printf("\033[47;30m\n[drone %d reached goal]==============================================\033[0m\n",
-                 planner_manager_->pp_.drone_id);
+          printf("\033[47;30m\n[drone %d reached goal]==============================================\033[0m\n", planner_manager_->pp_.drone_id);
           std_msgs::Bool msg;
           msg.data = true;
           reached_pub_.publish(msg);
@@ -279,10 +277,10 @@ namespace ego_planner
     exec_timer_.start();
   }
 
-  void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent &e)
+  void EGOReplanFSM::checkCollisionCallback(const ros::TimerEvent& e)
   {
 
-    LocalTrajData *info = &planner_manager_->traj_.local_traj;
+    LocalTrajData* info = &planner_manager_->traj_.local_traj;
     auto map = planner_manager_->grid_map_;
 
     if (exec_state_ == WAIT_TARGET || info->traj_id <= 0)
@@ -313,8 +311,7 @@ namespace ego_planner
 
       if (map->getInflateOccupancy(info->traj.getPos(t)) == 1)
       {
-        ROS_WARN("drone %d is too close to the obstacle at relative time %f!",
-                 planner_manager_->pp_.drone_id, t / info->duration);
+        ROS_WARN("drone %d is too close to the obstacle at relative time %f!", planner_manager_->pp_.drone_id, t / info->duration);
         t_temp = t;
         occ = true;
         break;
@@ -338,8 +335,7 @@ namespace ego_planner
 
         if (dist < CLEARANCE)
         {
-          ROS_WARN("swarm distance between drone %d and drone %zu is %f, too close!",
-                   planner_manager_->pp_.drone_id, id, dist);
+          ROS_WARN("swarm distance between drone %d and drone %zu is %f, too close!", planner_manager_->pp_.drone_id, id, dist);
           t_temp = t;
           occ = true;
           break;
@@ -375,14 +371,14 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::triggerCallback(const geometry_msgs::PoseStampedPtr &msg)
+  void EGOReplanFSM::triggerCallback(const geometry_msgs::PoseStampedPtr& msg)
   {
     have_trigger_ = true;
     cout << "Triggered!" << endl;
     init_pt_ = odom_pos_;
   }
 
-  void EGOReplanFSM::waypointCallback(const geometry_msgs::PoseStampedPtr &msg)
+  void EGOReplanFSM::waypointCallback(const geometry_msgs::PoseStampedPtr& msg)
   {
     if (msg->pose.position.z < -0.1)
       return;
@@ -397,9 +393,8 @@ namespace ego_planner
     std::vector<Eigen::Vector3d> one_pt_wps;
     one_pt_wps.push_back(end_pt_);
 
-    success = planner_manager_->planGlobalTrajWaypoints(
-        odom_pos_, odom_vel_, Eigen::Vector3d::Zero(),
-        one_pt_wps, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+    success = planner_manager_->planGlobalTrajWaypoints(odom_pos_, odom_vel_, Eigen::Vector3d::Zero(), one_pt_wps, Eigen::Vector3d::Zero(),
+                                                        Eigen::Vector3d::Zero());
 
     visualization_->displayGoalPoint(end_pt_, Eigen::Vector4d(0, 0.5, 0.5, 1), 0.3, 0);
 
@@ -433,7 +428,7 @@ namespace ego_planner
     }
   }
 
-  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr &msg)
+  void EGOReplanFSM::odometryCallback(const nav_msgs::OdometryConstPtr& msg)
   {
     odom_pos_(0) = msg->pose.pose.position.x;
     odom_pos_(1) = msg->pose.pose.position.y;
@@ -451,7 +446,7 @@ namespace ego_planner
     have_odom_ = true;
   }
 
-  void EGOReplanFSM::RecvBroadcastPolyTrajCallback(const traj_utils::PolyTrajConstPtr &msg)
+  void EGOReplanFSM::RecvBroadcastPolyTrajCallback(const traj_utils::PolyTrajConstPtr& msg)
   {
     if (msg->drone_id < 0)
     {
@@ -470,8 +465,7 @@ namespace ego_planner
     }
     if (abs((ros::Time::now() - msg->start_time).toSec()) > 0.25)
     {
-      ROS_WARN("Time stamp diff: Local - Remote Agent %d = %fs",
-               msg->drone_id, (ros::Time::now() - msg->start_time).toSec());
+      ROS_WARN("Time stamp diff: Local - Remote Agent %d = %fs", msg->drone_id, (ros::Time::now() - msg->start_time).toSec());
       return;
     }
 
@@ -501,12 +495,9 @@ namespace ego_planner
     for (int i = 0; i < piece_nums; ++i)
     {
       int i6 = i * 6;
-      cMats[i].row(0) << msg->coef_x[i6 + 0], msg->coef_x[i6 + 1], msg->coef_x[i6 + 2],
-          msg->coef_x[i6 + 3], msg->coef_x[i6 + 4], msg->coef_x[i6 + 5];
-      cMats[i].row(1) << msg->coef_y[i6 + 0], msg->coef_y[i6 + 1], msg->coef_y[i6 + 2],
-          msg->coef_y[i6 + 3], msg->coef_y[i6 + 4], msg->coef_y[i6 + 5];
-      cMats[i].row(2) << msg->coef_z[i6 + 0], msg->coef_z[i6 + 1], msg->coef_z[i6 + 2],
-          msg->coef_z[i6 + 3], msg->coef_z[i6 + 4], msg->coef_z[i6 + 5];
+      cMats[i].row(0) << msg->coef_x[i6 + 0], msg->coef_x[i6 + 1], msg->coef_x[i6 + 2], msg->coef_x[i6 + 3], msg->coef_x[i6 + 4], msg->coef_x[i6 + 5];
+      cMats[i].row(1) << msg->coef_y[i6 + 0], msg->coef_y[i6 + 1], msg->coef_y[i6 + 2], msg->coef_y[i6 + 3], msg->coef_y[i6 + 4], msg->coef_y[i6 + 5];
+      cMats[i].row(2) << msg->coef_z[i6 + 0], msg->coef_z[i6 + 1], msg->coef_z[i6 + 2], msg->coef_z[i6 + 3], msg->coef_z[i6 + 4], msg->coef_z[i6 + 5];
 
       dura[i] = msg->duration[i];
     }
@@ -597,7 +588,7 @@ namespace ego_planner
     return std::pair<int, FSM_EXEC_STATE>(continously_called_times_, exec_state_);
   }
 
-  void EGOReplanFSM::polyTraj2ROSMsg(traj_utils::PolyTraj &msg)
+  void EGOReplanFSM::polyTraj2ROSMsg(traj_utils::PolyTraj& msg)
   {
 
     auto data = &planner_manager_->traj_.local_traj;
@@ -627,8 +618,8 @@ namespace ego_planner
       }
     }
   }
-  
-  void EGOReplanFSM::formationWaypointCallback(const geometry_msgs::PoseStampedPtr &msg)
+
+  void EGOReplanFSM::formationWaypointCallback(const geometry_msgs::PoseStampedPtr& msg)
   {
     if (msg->pose.position.z < -0.1)
       return;
@@ -644,18 +635,15 @@ namespace ego_planner
     int id = planner_manager_->pp_.drone_id;
 
     Eigen::Vector3d relative_pos;
-    relative_pos << swarm_relative_pts_[id][0],
-                    swarm_relative_pts_[id][1],
-                    swarm_relative_pts_[id][2];
+    relative_pos << swarm_relative_pts_[id][0], swarm_relative_pts_[id][1], swarm_relative_pts_[id][2];
     end_pt_ = swarm_central_pos_ + swarm_scale_ * relative_pos;
 
     std::vector<Eigen::Vector3d> one_pt_wps;
     one_pt_wps.push_back(end_pt_);
 
 
-    success = planner_manager_->planGlobalTrajWaypoints(
-        odom_pos_, odom_vel_, Eigen::Vector3d::Zero(),
-        one_pt_wps, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+    success = planner_manager_->planGlobalTrajWaypoints(odom_pos_, odom_vel_, Eigen::Vector3d::Zero(), one_pt_wps, Eigen::Vector3d::Zero(),
+                                                        Eigen::Vector3d::Zero());
 
     visualization_->displayGoalPoint(end_pt_, Eigen::Vector4d(0, 0.5, 0.5, 1), 0.3, 0);
 
@@ -710,10 +698,8 @@ namespace ego_planner
     else
       return;
 
-    bool success = planner_manager_->planGlobalTrajWaypoints(odom_pos_, Eigen::Vector3d::Zero(),
-                                                             Eigen::Vector3d::Zero(), wps,
-                                                             Eigen::Vector3d::Zero(),
-                                                             Eigen::Vector3d::Zero());
+    bool success = planner_manager_->planGlobalTrajWaypoints(odom_pos_, Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), wps,
+                                                             Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
 
     if (success)
     {
@@ -761,7 +747,7 @@ namespace ego_planner
   bool EGOReplanFSM::planFromLocalTraj(bool flag_use_poly_init, bool use_formation)
   {
     // double t_debug_start = ros::Time::now().toSec();
-    LocalTrajData *info = &planner_manager_->traj_.local_traj;
+    LocalTrajData* info = &planner_manager_->traj_.local_traj;
     double t_cur = ros::Time::now().toSec() - info->start_time;
 
     start_pt_ = info->traj.getPos(t_cur);
@@ -781,21 +767,16 @@ namespace ego_planner
   bool EGOReplanFSM::callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj, bool use_formation)
   {
 
-    planner_manager_->getLocalTarget(
-        planning_horizen_, start_pt_, end_pt_,
-        local_target_pt_, local_target_vel_);
+    planner_manager_->getLocalTarget(planning_horizen_, start_pt_, end_pt_, local_target_pt_, local_target_vel_);
 
     Eigen::Vector3d desired_start_pt, desired_start_vel, desired_start_acc;
     double desired_start_time = 0.0;
     if (have_local_traj_ && use_formation)
     {
       desired_start_time = ros::Time::now().toSec() + replan_trajectory_time_;
-      desired_start_pt =
-          planner_manager_->traj_.local_traj.traj.getPos(desired_start_time - planner_manager_->traj_.local_traj.start_time);
-      desired_start_vel =
-          planner_manager_->traj_.local_traj.traj.getVel(desired_start_time - planner_manager_->traj_.local_traj.start_time);
-      desired_start_acc =
-          planner_manager_->traj_.local_traj.traj.getAcc(desired_start_time - planner_manager_->traj_.local_traj.start_time);
+      desired_start_pt = planner_manager_->traj_.local_traj.traj.getPos(desired_start_time - planner_manager_->traj_.local_traj.start_time);
+      desired_start_vel = planner_manager_->traj_.local_traj.traj.getVel(desired_start_time - planner_manager_->traj_.local_traj.start_time);
+      desired_start_acc = planner_manager_->traj_.local_traj.traj.getAcc(desired_start_time - planner_manager_->traj_.local_traj.start_time);
     }
     else
     {
@@ -803,11 +784,9 @@ namespace ego_planner
       desired_start_vel = start_vel_;
       desired_start_acc = start_acc_;
     }
-    bool plan_success = planner_manager_->reboundReplan(
-        desired_start_pt, desired_start_vel, desired_start_acc,
-        desired_start_time, local_target_pt_, local_target_vel_,
-        (have_new_target_ || flag_use_poly_init),
-        flag_randomPolyTraj, use_formation, have_local_traj_);
+    bool plan_success = planner_manager_->reboundReplan(desired_start_pt, desired_start_vel, desired_start_acc, desired_start_time, local_target_pt_,
+                                                        local_target_vel_, (have_new_target_ || flag_use_poly_init), flag_randomPolyTraj,
+                                                        use_formation, have_local_traj_);
 
     have_new_target_ = false;
 

@@ -3,7 +3,8 @@
 // #define current_img_ md_.depth_image_[image_cnt_ & 1]
 // #define last_img_ md_.depth_image_[!(image_cnt_ & 1)]
 
-void GridMap::initMap(ros::NodeHandle &nh)
+void
+GridMap::initMap(ros::NodeHandle& nh)
 {
   node_ = nh;
 
@@ -81,7 +82,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
   mp_.map_min_boundary_ = mp_.map_origin_;
   mp_.map_max_boundary_ = mp_.map_origin_ + mp_.map_size_;
 
-  if(mp_.virtual_ceil_height_ >= z_size + mp_.ground_height_ )
+  if (mp_.virtual_ceil_height_ >= z_size + mp_.ground_height_)
   {
     mp_.virtual_ceil_height_ = z_size + mp_.ground_height_ - mp_.resolution_;
   }
@@ -99,7 +100,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
   md_.flag_traverse_ = vector<char>(buffer_size, -1);
 
   md_.occupancy_buffer_neg_ = vector<char>(buffer_size, 0);
-  md_.distance_buffer_ = vector<double>(buffer_size, 10000);//10000
+  md_.distance_buffer_ = vector<double>(buffer_size, 10000); //10000
   md_.distance_buffer_neg_ = vector<double>(buffer_size, 10000);
   md_.distance_buffer_all_ = vector<double>(buffer_size, 10000);
   md_.tmp_buffer1_ = vector<double>(buffer_size, 0);
@@ -110,48 +111,39 @@ void GridMap::initMap(ros::NodeHandle &nh)
   md_.proj_points_.resize(640 * 480 / mp_.skip_pixel_ / mp_.skip_pixel_);
   md_.proj_points_cnt = 0;
 
-  md_.cam2body_ << 0.0, 0.0, 1.0, 0.0,
-      -1.0, 0.0, 0.0, 0.0,
-      0.0, -1.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 1.0;
+  md_.cam2body_ << 0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0;
 
   /* init callback */
-  
+
   depth_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(node_, "grid_map/depth", 50));
-  extrinsic_sub_ = node_.subscribe<nav_msgs::Odometry>(
-      "/vins_estimator/extrinsic", 10, &GridMap::extrinsicCallback, this); //sub
-  
+  extrinsic_sub_ = node_.subscribe<nav_msgs::Odometry>("/vins_estimator/extrinsic", 10, &GridMap::extrinsicCallback, this); //sub
+
   if (mp_.pose_type_ == POSE_STAMPED)
   {
-    pose_sub_.reset(
-        new message_filters::Subscriber<geometry_msgs::PoseStamped>(node_, "grid_map/pose", 25));
+    pose_sub_.reset(new message_filters::Subscriber<geometry_msgs::PoseStamped>(node_, "grid_map/pose", 25));
 
-    sync_image_pose_.reset(new message_filters::Synchronizer<SyncPolicyImagePose>(
-        SyncPolicyImagePose(100), *depth_sub_, *pose_sub_));
+    sync_image_pose_.reset(new message_filters::Synchronizer<SyncPolicyImagePose>(SyncPolicyImagePose(100), *depth_sub_, *pose_sub_));
     sync_image_pose_->registerCallback(boost::bind(&GridMap::depthPoseCallback, this, _1, _2));
   }
   else if (mp_.pose_type_ == ODOMETRY)
   {
     odom_sub_.reset(new message_filters::Subscriber<nav_msgs::Odometry>(node_, "grid_map/odom", 100, ros::TransportHints().tcpNoDelay()));
 
-    sync_image_odom_.reset(new message_filters::Synchronizer<SyncPolicyImageOdom>(
-        SyncPolicyImageOdom(100), *depth_sub_, *odom_sub_));
+    sync_image_odom_.reset(new message_filters::Synchronizer<SyncPolicyImageOdom>(SyncPolicyImageOdom(100), *depth_sub_, *odom_sub_));
     sync_image_odom_->registerCallback(boost::bind(&GridMap::depthOdomCallback, this, _1, _2));
   }
-  
+
   // use odometry and point cloud
-  indep_cloud_sub_ =
-      node_.subscribe<sensor_msgs::PointCloud2>("grid_map/cloud", 10, &GridMap::cloudCallback, this);
-  indep_odom_sub_ =
-      node_.subscribe<nav_msgs::Odometry>("grid_map/odom", 10, &GridMap::odomCallback, this);
-  
-  occ_timer_  = node_.createTimer(ros::Duration(0.05), &GridMap::updateOccupancyCallback, this);
+  indep_cloud_sub_ = node_.subscribe<sensor_msgs::PointCloud2>("grid_map/cloud", 10, &GridMap::cloudCallback, this);
+  indep_odom_sub_ = node_.subscribe<nav_msgs::Odometry>("grid_map/odom", 10, &GridMap::odomCallback, this);
+
+  occ_timer_ = node_.createTimer(ros::Duration(0.05), &GridMap::updateOccupancyCallback, this);
   esdf_timer_ = node_.createTimer(ros::Duration(0.05), &GridMap::updateESDFCallback, this);
-  vis_timer_  = node_.createTimer(ros::Duration(0.05), &GridMap::visCallback, this);
-  
-  map_pub_      = node_.advertise<sensor_msgs::PointCloud2>("grid_map/occupancy", 10);
-  map_inf_pub_  = node_.advertise<sensor_msgs::PointCloud2>("grid_map/occupancy_inflate", 10);
-  esdf_pub_     = node_.advertise<sensor_msgs::PointCloud2>("grid_map/esdf", 10);
+  vis_timer_ = node_.createTimer(ros::Duration(0.05), &GridMap::visCallback, this);
+
+  map_pub_ = node_.advertise<sensor_msgs::PointCloud2>("grid_map/occupancy", 10);
+  map_inf_pub_ = node_.advertise<sensor_msgs::PointCloud2>("grid_map/occupancy_inflate", 10);
+  esdf_pub_ = node_.advertise<sensor_msgs::PointCloud2>("grid_map/esdf", 10);
 
   md_.occ_need_update_ = false;
   md_.local_updated_ = false;
@@ -175,7 +167,8 @@ void GridMap::initMap(ros::NodeHandle &nh)
   // eng_ = default_random_engine(rd());
 }
 
-void GridMap::resetBuffer()
+void
+GridMap::resetBuffer()
 {
   Eigen::Vector3d min_pos = mp_.map_min_boundary_;
   Eigen::Vector3d max_pos = mp_.map_max_boundary_;
@@ -186,7 +179,8 @@ void GridMap::resetBuffer()
   md_.local_bound_max_ = mp_.map_voxel_num_ - Eigen::Vector3i::Ones();
 }
 
-void GridMap::resetBuffer(Eigen::Vector3d min_pos, Eigen::Vector3d max_pos)
+void
+GridMap::resetBuffer(Eigen::Vector3d min_pos, Eigen::Vector3d max_pos)
 {
 
   Eigen::Vector3i min_id, max_id;
@@ -206,7 +200,8 @@ void GridMap::resetBuffer(Eigen::Vector3d min_pos, Eigen::Vector3d max_pos)
       }
 }
 
-int GridMap::setCacheOccupancy(Eigen::Vector3d pos, int occ)
+int
+GridMap::setCacheOccupancy(Eigen::Vector3d pos, int occ)
 {
   if (occ != 1 && occ != 0)
     return INVALID_IDX;
@@ -228,12 +223,13 @@ int GridMap::setCacheOccupancy(Eigen::Vector3d pos, int occ)
   return idx_ctns;
 }
 
-void GridMap::projectDepthImage()
+void
+GridMap::projectDepthImage()
 {
   // md_.proj_points_.clear();
   md_.proj_points_cnt = 0;
 
-  uint16_t *row_ptr;
+  uint16_t* row_ptr;
   // int cols = current_img_.cols, rows = current_img_.rows;
   int cols = md_.depth_image_.cols;
   int rows = md_.depth_image_.rows;
@@ -284,8 +280,7 @@ void GridMap::projectDepthImage()
       {
         row_ptr = md_.depth_image_.ptr<uint16_t>(v) + mp_.depth_filter_margin_;
 
-        for (int u = mp_.depth_filter_margin_; u < cols - mp_.depth_filter_margin_;
-             u += mp_.skip_pixel_)
+        for (int u = mp_.depth_filter_margin_; u < cols - mp_.depth_filter_margin_; u += mp_.skip_pixel_)
         {
 
           depth = (*row_ptr) * inv_factor;
@@ -329,8 +324,7 @@ void GridMap::projectDepthImage()
 
             if (uu >= 0 && uu < cols && vv >= 0 && vv < rows)
             {
-              if (fabs(md_.last_depth_image_.at<uint16_t>((int)vv, (int)uu) * inv_factor -
-                       pt_reproj.z()) < mp_.depth_filter_tolerance_)
+              if (fabs(md_.last_depth_image_.at<uint16_t>((int)vv, (int)uu) * inv_factor - pt_reproj.z()) < mp_.depth_filter_tolerance_)
               {
                 md_.proj_points_[md_.proj_points_cnt++] = pt_world;
               }
@@ -352,7 +346,8 @@ void GridMap::projectDepthImage()
   md_.last_depth_image_ = md_.depth_image_;
 }
 
-void GridMap::raycastProcess()
+void
+GridMap::raycastProcess()
 {
   // if (md_.proj_points_.size() == 0)
   if (md_.proj_points_cnt == 0)
@@ -511,20 +506,19 @@ void GridMap::raycastProcess()
       continue;
     }
 
-    bool in_local = idx(0) >= min_id(0) && idx(0) <= max_id(0) && idx(1) >= min_id(1) &&
-                    idx(1) <= max_id(1) && idx(2) >= min_id(2) && idx(2) <= max_id(2);
+    bool in_local =
+        idx(0) >= min_id(0) && idx(0) <= max_id(0) && idx(1) >= min_id(1) && idx(1) <= max_id(1) && idx(2) >= min_id(2) && idx(2) <= max_id(2);
     if (!in_local)
     {
       md_.occupancy_buffer_[idx_ctns] = mp_.clamp_min_log_;
     }
 
-    md_.occupancy_buffer_[idx_ctns] =
-        std::min(std::max(md_.occupancy_buffer_[idx_ctns] + log_odds_update, mp_.clamp_min_log_),
-                 mp_.clamp_max_log_);
+    md_.occupancy_buffer_[idx_ctns] = std::min(std::max(md_.occupancy_buffer_[idx_ctns] + log_odds_update, mp_.clamp_min_log_), mp_.clamp_max_log_);
   }
 }
 
-Eigen::Vector3d GridMap::closetPointInMap(const Eigen::Vector3d &pt, const Eigen::Vector3d &camera_pt)
+Eigen::Vector3d
+GridMap::closetPointInMap(const Eigen::Vector3d& pt, const Eigen::Vector3d& camera_pt)
 {
   Eigen::Vector3d diff = pt - camera_pt;
   Eigen::Vector3d max_tc = mp_.map_max_boundary_ - camera_pt;
@@ -550,7 +544,8 @@ Eigen::Vector3d GridMap::closetPointInMap(const Eigen::Vector3d &pt, const Eigen
   return camera_pt + (min_t - 1e-3) * diff;
 }
 
-void GridMap::clearAndInflateLocalMap()
+void
+GridMap::clearAndInflateLocalMap()
 {
   /*clear outside local*/
   const int vec_margin = 5;
@@ -558,10 +553,8 @@ void GridMap::clearAndInflateLocalMap()
   // vec_margin, vec_margin); Eigen::Vector3i max_vec_margin = max_vec +
   // Eigen::Vector3i(vec_margin, vec_margin, vec_margin);
 
-  Eigen::Vector3i min_cut = md_.local_bound_min_ -
-                            Eigen::Vector3i(mp_.local_map_margin_, mp_.local_map_margin_, mp_.local_map_margin_);
-  Eigen::Vector3i max_cut = md_.local_bound_max_ +
-                            Eigen::Vector3i(mp_.local_map_margin_, mp_.local_map_margin_, mp_.local_map_margin_);
+  Eigen::Vector3i min_cut = md_.local_bound_min_ - Eigen::Vector3i(mp_.local_map_margin_, mp_.local_map_margin_, mp_.local_map_margin_);
+  Eigen::Vector3i max_cut = md_.local_bound_max_ + Eigen::Vector3i(mp_.local_map_margin_, mp_.local_map_margin_, mp_.local_map_margin_);
   boundIndex(min_cut);
   boundIndex(max_cut);
 
@@ -659,8 +652,7 @@ void GridMap::clearAndInflateLocalMap()
           {
             inf_pt = inf_pts[k];
             int idx_inf = toAddress(inf_pt);
-            if (idx_inf < 0 ||
-                idx_inf >= mp_.map_voxel_num_(0) * mp_.map_voxel_num_(1) * mp_.map_voxel_num_(2))
+            if (idx_inf < 0 || idx_inf >= mp_.map_voxel_num_(0) * mp_.map_voxel_num_(1) * mp_.map_voxel_num_(2))
             {
               continue;
             }
@@ -682,7 +674,8 @@ void GridMap::clearAndInflateLocalMap()
   }
 }
 
-void GridMap::visCallback(const ros::TimerEvent & /*event*/)
+void
+GridMap::visCallback(const ros::TimerEvent& /*event*/)
 {
   publishMapInflate(true);
   publishMap();
@@ -690,7 +683,8 @@ void GridMap::visCallback(const ros::TimerEvent & /*event*/)
   // publishESDF();
 }
 
-void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
+void
+GridMap::updateOccupancyCallback(const ros::TimerEvent& /*event*/)
 {
   if (md_.last_occ_update_time_.toSec() < 1.0)
     md_.last_occ_update_time_ = ros::Time::now();
@@ -699,8 +693,8 @@ void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
   {
     if (md_.flag_use_depth_fusion && (ros::Time::now() - md_.last_occ_update_time_).toSec() > mp_.odom_depth_timeout_)
     {
-      ROS_ERROR("odom or depth lost! ros::Time::now()=%f, md_.last_occ_update_time_=%f, mp_.odom_depth_timeout_=%f",
-                ros::Time::now().toSec(), md_.last_occ_update_time_.toSec(), mp_.odom_depth_timeout_);
+      ROS_ERROR("odom or depth lost! ros::Time::now()=%f, md_.last_occ_update_time_=%f, mp_.odom_depth_timeout_=%f", ros::Time::now().toSec(),
+                md_.last_occ_update_time_.toSec(), mp_.odom_depth_timeout_);
       md_.flag_depth_odom_timeout_ = true;
     }
     return;
@@ -723,16 +717,19 @@ void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
   md_.max_fuse_time_ = max(md_.max_fuse_time_, (t2 - t1).toSec());
 
   if (mp_.show_occ_time_)
-    ROS_WARN("Fusion: cur t = %lf, avg t = %lf, max t = %lf", (t2 - t1).toSec(),
-             md_.fuse_time_ / md_.update_num_, md_.max_fuse_time_);
+    ROS_WARN("Fusion: cur t = %lf, avg t = %lf, max t = %lf", (t2 - t1).toSec(), md_.fuse_time_ / md_.update_num_, md_.max_fuse_time_);
 
   md_.occ_need_update_ = false;
-  if (md_.local_updated_) md_.esdf_need_update_ = true;
+  if (md_.local_updated_)
+    md_.esdf_need_update_ = true;
   md_.local_updated_ = false;
 }
 
-void GridMap::updateESDFCallback(const ros::TimerEvent& /*event*/){
-  if (!md_.esdf_need_update_) return;
+void
+GridMap::updateESDFCallback(const ros::TimerEvent& /*event*/)
+{
+  if (!md_.esdf_need_update_)
+    return;
 
   /* esdf */
   ros::Time t1, t2;
@@ -746,14 +743,13 @@ void GridMap::updateESDFCallback(const ros::TimerEvent& /*event*/){
   md_.max_esdf_time_ = max(md_.max_esdf_time_, (t2 - t1).toSec());
 
   if (mp_.show_esdf_time_)
-    ROS_WARN("ESDF: cur t = %lf, avg t = %lf, max t = %lf", (t2 - t1).toSec(),
-             md_.esdf_time_ / md_.update_num_, md_.max_esdf_time_);
+    ROS_WARN("ESDF: cur t = %lf, avg t = %lf, max t = %lf", (t2 - t1).toSec(), md_.esdf_time_ / md_.update_num_, md_.max_esdf_time_);
 
   md_.esdf_need_update_ = false;
 }
 
-void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
-                                const geometry_msgs::PoseStampedConstPtr &pose)
+void
+GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr& img, const geometry_msgs::PoseStampedConstPtr& pose)
 {
   /* get depth image */
   cv_bridge::CvImagePtr cv_ptr;
@@ -771,9 +767,8 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
   md_.camera_pos_(0) = pose->pose.position.x;
   md_.camera_pos_(1) = pose->pose.position.y;
   md_.camera_pos_(2) = pose->pose.position.z;
-  md_.camera_r_m_ = Eigen::Quaterniond(pose->pose.orientation.w, pose->pose.orientation.x,
-                                       pose->pose.orientation.y, pose->pose.orientation.z)
-                        .toRotationMatrix();
+  md_.camera_r_m_ =
+      Eigen::Quaterniond(pose->pose.orientation.w, pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z).toRotationMatrix();
   if (isInMap(md_.camera_pos_))
   {
     md_.has_odom_ = true;
@@ -788,7 +783,8 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
   md_.flag_use_depth_fusion = true;
 }
 
-void GridMap::odomCallback(const nav_msgs::OdometryConstPtr &odom)
+void
+GridMap::odomCallback(const nav_msgs::OdometryConstPtr& odom)
 {
   if (md_.has_first_depth_)
     return;
@@ -800,7 +796,8 @@ void GridMap::odomCallback(const nav_msgs::OdometryConstPtr &odom)
   md_.has_odom_ = true;
 }
 
-void GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &img)
+void
+GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& img)
 {
 
   pcl::PointCloud<pcl::PointXYZ> latest_cloud;
@@ -820,8 +817,7 @@ void GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &img)
   if (isnan(md_.camera_pos_(0)) || isnan(md_.camera_pos_(1)) || isnan(md_.camera_pos_(2)))
     return;
 
-  this->resetBuffer(md_.camera_pos_ - mp_.local_update_range_,
-                    md_.camera_pos_ + mp_.local_update_range_);
+  this->resetBuffer(md_.camera_pos_ - mp_.local_update_range_, md_.camera_pos_ + mp_.local_update_range_);
 
   pcl::PointXYZ pt;
   Eigen::Vector3d p3d, p3d_inf;
@@ -848,8 +844,7 @@ void GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &img)
     Eigen::Vector3d devi = p3d - md_.camera_pos_;
     Eigen::Vector3i inf_pt;
 
-    if (fabs(devi(0)) < mp_.local_update_range_(0) && fabs(devi(1)) < mp_.local_update_range_(1) &&
-        fabs(devi(2)) < mp_.local_update_range_(2))
+    if (fabs(devi(0)) < mp_.local_update_range_(0) && fabs(devi(1)) < mp_.local_update_range_(1) && fabs(devi(2)) < mp_.local_update_range_(2))
     {
 
       /* inflate the point */
@@ -912,7 +907,8 @@ void GridMap::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &img)
   md_.esdf_need_update_ = true;
 }
 
-void GridMap::publishMap()
+void
+GridMap::publishMap()
 {
 
   if (map_pub_.getNumSubscribers() <= 0)
@@ -959,7 +955,8 @@ void GridMap::publishMap()
   map_pub_.publish(cloud_msg);
 }
 
-void GridMap::publishMapInflate(bool all_info)
+void
+GridMap::publishMapInflate(bool all_info)
 {
 
   if (map_inf_pub_.getNumSubscribers() <= 0)
@@ -1011,27 +1008,39 @@ void GridMap::publishMapInflate(bool all_info)
   // ROS_INFO("pub map");
 }
 
-bool GridMap::odomValid() { return md_.has_odom_; }
+bool
+GridMap::odomValid()
+{
+  return md_.has_odom_;
+}
 
-bool GridMap::hasDepthObservation() { return md_.has_first_depth_; }
+bool
+GridMap::hasDepthObservation()
+{
+  return md_.has_first_depth_;
+}
 
-Eigen::Vector3d GridMap::getOrigin() { return mp_.map_origin_; }
+Eigen::Vector3d
+GridMap::getOrigin()
+{
+  return mp_.map_origin_;
+}
 
 // int GridMap::getVoxelNum() {
 //   return mp_.map_voxel_num_[0] * mp_.map_voxel_num_[1] * mp_.map_voxel_num_[2];
 // }
 
-void GridMap::getRegion(Eigen::Vector3d &ori, Eigen::Vector3d &size)
+void
+GridMap::getRegion(Eigen::Vector3d& ori, Eigen::Vector3d& size)
 {
   ori = mp_.map_origin_, size = mp_.map_size_;
 }
 
-void GridMap::extrinsicCallback(const nav_msgs::OdometryConstPtr &odom)
+void
+GridMap::extrinsicCallback(const nav_msgs::OdometryConstPtr& odom)
 {
-  Eigen::Quaterniond cam2body_q = Eigen::Quaterniond(odom->pose.pose.orientation.w,
-                                                     odom->pose.pose.orientation.x,
-                                                     odom->pose.pose.orientation.y,
-                                                     odom->pose.pose.orientation.z);
+  Eigen::Quaterniond cam2body_q =
+      Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
   Eigen::Matrix3d cam2body_r_m = cam2body_q.toRotationMatrix();
   md_.cam2body_.block<3, 3>(0, 0) = cam2body_r_m;
   md_.cam2body_(0, 3) = odom->pose.pose.position.x;
@@ -1040,14 +1049,12 @@ void GridMap::extrinsicCallback(const nav_msgs::OdometryConstPtr &odom)
   md_.cam2body_(3, 3) = 1.0;
 }
 
-void GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr &img,
-                                const nav_msgs::OdometryConstPtr &odom)
+void
+GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr& img, const nav_msgs::OdometryConstPtr& odom)
 {
   /* get pose */
-  Eigen::Quaterniond body_q = Eigen::Quaterniond(odom->pose.pose.orientation.w,
-                                                 odom->pose.pose.orientation.x,
-                                                 odom->pose.pose.orientation.y,
-                                                 odom->pose.pose.orientation.z);
+  Eigen::Quaterniond body_q =
+      Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x, odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
   Eigen::Matrix3d body_r_m = body_q.toRotationMatrix();
   Eigen::Matrix4d body2world;
   body2world.block<3, 3>(0, 0) = body_r_m;
@@ -1076,7 +1083,9 @@ void GridMap::depthOdomCallback(const sensor_msgs::ImageConstPtr &img,
 }
 
 template <typename F_get_val, typename F_set_val>
-void GridMap::fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int end, int dim) {
+void
+GridMap::fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int end, int dim)
+{
   int v[mp_.map_voxel_num_(dim)];
   double z[mp_.map_voxel_num_(dim) + 1];
 
@@ -1085,11 +1094,13 @@ void GridMap::fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int 
   z[start] = -std::numeric_limits<double>::max();
   z[start + 1] = std::numeric_limits<double>::max();
 
-  for (int q = start + 1; q <= end; q++) {
+  for (int q = start + 1; q <= end; q++)
+  {
     k++;
     double s;
 
-    do {
+    do
+    {
       k--;
       s = ((f_get_val(q) + q * q) - (f_get_val(v[k]) + v[k] * v[k])) / (2 * q - 2 * v[k]);
     } while (s <= z[k]);
@@ -1103,7 +1114,8 @@ void GridMap::fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int 
 
   k = start;
 
-  for (int q = start; q <= end; q++) {
+  for (int q = start; q <= end; q++)
+  {
     while (z[k + 1] < q)
       k++;
     double val = (q - v[k]) * (q - v[k]) + f_get_val(v[k]);
@@ -1111,36 +1123,38 @@ void GridMap::fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int 
   }
 }
 
-void GridMap::updateESDF3d (){
+void
+GridMap::updateESDF3d()
+{
   Eigen::Vector3i min_esdf = md_.local_bound_min_;
   Eigen::Vector3i max_esdf = md_.local_bound_max_;
 
   /* ========== compute positive DT ========== */
-  for (int x = min_esdf[0]; x <= max_esdf[0]; x++) {
-    for (int y = min_esdf[1]; y <= max_esdf[1]; y++) {
-      fillESDF(
-          [&](int z) {
-            return md_.occupancy_buffer_inflate_[toAddress(x, y, z)] == 1 ?
-                0 :
-                std::numeric_limits<double>::max();
-          },
-          [&](int z, double val) { md_.tmp_buffer1_[toAddress(x, y, z)] = val; }, min_esdf[2],
-          max_esdf[2], 2);
+  for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
+  {
+    for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
+    {
+      fillESDF([&](int z) { return md_.occupancy_buffer_inflate_[toAddress(x, y, z)] == 1 ? 0 : std::numeric_limits<double>::max(); },
+               [&](int z, double val) { md_.tmp_buffer1_[toAddress(x, y, z)] = val; }, min_esdf[2], max_esdf[2], 2);
     }
   }
 
-  for (int x = min_esdf[0]; x <= max_esdf[0]; x++) {
-    for (int z = min_esdf[2]; z <= max_esdf[2]; z++) {
-      fillESDF([&](int y) { return md_.tmp_buffer1_[toAddress(x, y, z)]; },
-               [&](int y, double val) { md_.tmp_buffer2_[toAddress(x, y, z)] = val; }, min_esdf[1],
-               max_esdf[1], 1);
+  for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
+  {
+    for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
+    {
+      fillESDF([&](int y) { return md_.tmp_buffer1_[toAddress(x, y, z)]; }, [&](int y, double val) { md_.tmp_buffer2_[toAddress(x, y, z)] = val; },
+               min_esdf[1], max_esdf[1], 1);
     }
   }
 
-  for (int y = min_esdf[1]; y <= max_esdf[1]; y++) {
-    for (int z = min_esdf[2]; z <= max_esdf[2]; z++) {
+  for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
+  {
+    for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
+    {
       fillESDF([&](int x) { return md_.tmp_buffer2_[toAddress(x, y, z)]; },
-               [&](int x, double val) {
+               [&](int x, double val)
+               {
                  md_.distance_buffer_[toAddress(x, y, z)] = mp_.resolution_ * std::sqrt(val);
                  //  min(mp_.resolution_ * std::sqrt(val),
                  //      distance_buffer_[toAddress(x, y, z)]);
@@ -1152,15 +1166,20 @@ void GridMap::updateESDF3d (){
   /* ========== compute negative distance ========== */
   for (int x = min_esdf(0); x <= max_esdf(0); ++x)
     for (int y = min_esdf(1); y <= max_esdf(1); ++y)
-      for (int z = min_esdf(2); z <= max_esdf(2); ++z) {
+      for (int z = min_esdf(2); z <= max_esdf(2); ++z)
+      {
 
         int idx = toAddress(x, y, z);
-        if (md_.occupancy_buffer_inflate_[idx] == 0) {
+        if (md_.occupancy_buffer_inflate_[idx] == 0)
+        {
           md_.occupancy_buffer_neg_[idx] = 1;
-
-        } else if (md_.occupancy_buffer_inflate_[idx] == 1) {
+        }
+        else if (md_.occupancy_buffer_inflate_[idx] == 1)
+        {
           md_.occupancy_buffer_neg_[idx] = 0;
-        } else {
+        }
+        else
+        {
           ROS_ERROR("what?");
         }
       }
@@ -1168,42 +1187,44 @@ void GridMap::updateESDF3d (){
   md_.tmp_buffer1_.clear();
   md_.tmp_buffer2_.clear();
 
-  for (int x = min_esdf[0]; x <= max_esdf[0]; x++) {
-    for (int y = min_esdf[1]; y <= max_esdf[1]; y++) {
+  for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
+  {
+    for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
+    {
       fillESDF(
-          [&](int z) {
-            return md_.occupancy_buffer_neg_[x * mp_.map_voxel_num_(1) * mp_.map_voxel_num_(2) +
-                                            y * mp_.map_voxel_num_(2) + z] == 1 ?
-                0 :
-                std::numeric_limits<double>::max();
+          [&](int z)
+          {
+            return md_.occupancy_buffer_neg_[x * mp_.map_voxel_num_(1) * mp_.map_voxel_num_(2) + y * mp_.map_voxel_num_(2) + z] == 1
+                       ? 0
+                       : std::numeric_limits<double>::max();
           },
-          [&](int z, double val) { md_.tmp_buffer1_[toAddress(x, y, z)] = val; }, min_esdf[2],
-          max_esdf[2], 2);
+          [&](int z, double val) { md_.tmp_buffer1_[toAddress(x, y, z)] = val; }, min_esdf[2], max_esdf[2], 2);
     }
   }
 
-  for (int x = min_esdf[0]; x <= max_esdf[0]; x++) {
-    for (int z = min_esdf[2]; z <= max_esdf[2]; z++) {
-      fillESDF([&](int y) { return md_.tmp_buffer1_[toAddress(x, y, z)]; },
-               [&](int y, double val) { md_.tmp_buffer2_[toAddress(x, y, z)] = val; }, min_esdf[1],
-               max_esdf[1], 1);
+  for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
+  {
+    for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
+    {
+      fillESDF([&](int y) { return md_.tmp_buffer1_[toAddress(x, y, z)]; }, [&](int y, double val) { md_.tmp_buffer2_[toAddress(x, y, z)] = val; },
+               min_esdf[1], max_esdf[1], 1);
     }
   }
 
-  for (int y = min_esdf[1]; y <= max_esdf[1]; y++) {
-    for (int z = min_esdf[2]; z <= max_esdf[2]; z++) {
-      fillESDF([&](int x) { return md_.tmp_buffer2_[toAddress(x, y, z)]; },
-               [&](int x, double val) {
-                 md_.distance_buffer_neg_[toAddress(x, y, z)] = mp_.resolution_ * std::sqrt(val);
-               },
-               min_esdf[0], max_esdf[0], 0);
+  for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
+  {
+    for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
+    {
+      fillESDF([&](int x) { return md_.tmp_buffer2_[toAddress(x, y, z)]; }, [&](int x, double val)
+               { md_.distance_buffer_neg_[toAddress(x, y, z)] = mp_.resolution_ * std::sqrt(val); }, min_esdf[0], max_esdf[0], 0);
     }
   }
 
   /* ========== combine pos and neg DT ========== */
   for (int x = min_esdf(0); x <= max_esdf(0); ++x)
     for (int y = min_esdf(1); y <= max_esdf(1); ++y)
-      for (int z = min_esdf(2); z <= max_esdf(2); ++z) {
+      for (int z = min_esdf(2); z <= max_esdf(2); ++z)
+      {
 
         int idx = toAddress(x, y, z);
         md_.distance_buffer_all_[idx] = md_.distance_buffer_[idx];
@@ -1213,7 +1234,9 @@ void GridMap::updateESDF3d (){
       }
 }
 
-void GridMap::publishESDF(){
+void
+GridMap::publishESDF()
+{
   double dist;
   pcl::PointCloud<pcl::PointXYZI> cloud;
   pcl::PointXYZI pt;
@@ -1231,7 +1254,8 @@ void GridMap::publishESDF(){
   boundIndex(max_cut);
 
   for (int x = min_cut(0); x <= max_cut(0); ++x)
-    for (int y = min_cut(1); y <= max_cut(1); ++y) {
+    for (int y = min_cut(1); y <= max_cut(1); ++y)
+    {
 
       Eigen::Vector3d pos;
       indexToPos(Eigen::Vector3i(x, y, -0.5), pos);
@@ -1260,9 +1284,9 @@ void GridMap::publishESDF(){
 
 /* use for ESDF API*/
 
-void GridMap::getSurroundPts(const Eigen::Vector3d& pos, 
-                             Eigen::Vector3d pts[2][2][2],
-                             Eigen::Vector3d& diff){
+void
+GridMap::getSurroundPts(const Eigen::Vector3d& pos, Eigen::Vector3d pts[2][2][2], Eigen::Vector3d& diff)
+{
   /* interpolation position */
   Eigen::Vector3d pos_m = pos - 0.5 * mp_.resolution_ * Eigen::Vector3d::Ones();
   Eigen::Vector3i idx;
@@ -1272,9 +1296,12 @@ void GridMap::getSurroundPts(const Eigen::Vector3d& pos,
   indexToPos(idx, idx_pos);
   diff = (pos - idx_pos) * mp_.resolution_inv_;
 
-  for (int x = 0; x < 2; x++) {
-    for (int y = 0; y < 2; y++) {
-      for (int z = 0; z < 2; z++) {
+  for (int x = 0; x < 2; x++)
+  {
+    for (int y = 0; y < 2; y++)
+    {
+      for (int z = 0; z < 2; z++)
+      {
         Eigen::Vector3i current_idx = idx + Eigen::Vector3i(x, y, z);
         Eigen::Vector3d current_pos;
         indexToPos(current_idx, current_pos);
@@ -1284,41 +1311,46 @@ void GridMap::getSurroundPts(const Eigen::Vector3d& pos,
   }
 }
 
-void GridMap::getSurroundDistance(Eigen::Vector3d pts[2][2][2], double dists[2][2][2]){
-  for (int x = 0; x < 2; x++) {
-    for (int y = 0; y < 2; y++) {
-      for (int z = 0; z < 2; z++) {
-          dists[x][y][z] = getDistance(pts[x][y][z]);
+void
+GridMap::getSurroundDistance(Eigen::Vector3d pts[2][2][2], double dists[2][2][2])
+{
+  for (int x = 0; x < 2; x++)
+  {
+    for (int y = 0; y < 2; y++)
+    {
+      for (int z = 0; z < 2; z++)
+      {
+        dists[x][y][z] = getDistance(pts[x][y][z]);
       }
     }
   }
 }
 
-void GridMap::interpolateTrilinearEDT(double values[2][2][2],
-                                      const Eigen::Vector3d& diff,
-                                      double& value){
+void
+GridMap::interpolateTrilinearEDT(double values[2][2][2], const Eigen::Vector3d& diff, double& value)
+{
   // trilinear interpolation
   double v00 = (1 - diff(0)) * values[0][0][0] + diff(0) * values[1][0][0]; // b
   double v01 = (1 - diff(0)) * values[0][0][1] + diff(0) * values[1][0][1]; // d
   double v10 = (1 - diff(0)) * values[0][1][0] + diff(0) * values[1][1][0]; // a
   double v11 = (1 - diff(0)) * values[0][1][1] + diff(0) * values[1][1][1]; // c
-  double v0 = (1 - diff(1)) * v00 + diff(1) * v10;  // e
-  double v1 = (1 - diff(1)) * v01 + diff(1) * v11;  // f
-  
+  double v0 = (1 - diff(1)) * v00 + diff(1) * v10;                          // e
+  double v1 = (1 - diff(1)) * v01 + diff(1) * v11;                          // f
+
   value = (1 - diff(2)) * v0 + diff(2) * v1;
 }
 
-void GridMap::interpolateTrilinearFirstGrad(double values[2][2][2],
-                                            const Eigen::Vector3d& diff,
-                                            Eigen::Vector3d& grad){
+void
+GridMap::interpolateTrilinearFirstGrad(double values[2][2][2], const Eigen::Vector3d& diff, Eigen::Vector3d& grad)
+{
   // trilinear interpolation
   double v00 = (1 - diff(0)) * values[0][0][0] + diff(0) * values[1][0][0]; // b
   double v01 = (1 - diff(0)) * values[0][0][1] + diff(0) * values[1][0][1]; // d
   double v10 = (1 - diff(0)) * values[0][1][0] + diff(0) * values[1][1][0]; // a
   double v11 = (1 - diff(0)) * values[0][1][1] + diff(0) * values[1][1][1]; // c
-  double v0 = (1 - diff(1)) * v00 + diff(1) * v10;  // e
-  double v1 = (1 - diff(1)) * v01 + diff(1) * v11;  // f
-  
+  double v0 = (1 - diff(1)) * v00 + diff(1) * v10;                          // e
+  double v1 = (1 - diff(1)) * v01 + diff(1) * v11;                          // f
+
   grad[2] = (v1 - v0) * mp_.resolution_inv_;
   grad[1] = ((1 - diff[2]) * (v10 - v00) + diff[2] * (v11 - v01)) * mp_.resolution_inv_;
   grad[0] = (1 - diff[2]) * (1 - diff[1]) * (values[1][0][0] - values[0][0][0]);
@@ -1328,8 +1360,9 @@ void GridMap::interpolateTrilinearFirstGrad(double values[2][2][2],
   grad[0] *= mp_.resolution_inv_;
 }
 
-void GridMap::evaluateEDT(const Eigen::Vector3d& pos,
-                          double& dist){
+void
+GridMap::evaluateEDT(const Eigen::Vector3d& pos, double& dist)
+{
   Eigen::Vector3d diff;
   Eigen::Vector3d sur_pts[2][2][2];
   getSurroundPts(pos, sur_pts, diff);
@@ -1340,8 +1373,9 @@ void GridMap::evaluateEDT(const Eigen::Vector3d& pos,
   interpolateTrilinearEDT(dists, diff, dist);
 }
 
-void GridMap::evaluateFirstGrad(const Eigen::Vector3d& pos,
-                                Eigen::Vector3d& grad){
+void
+GridMap::evaluateFirstGrad(const Eigen::Vector3d& pos, Eigen::Vector3d& grad)
+{
   Eigen::Vector3d diff;
   Eigen::Vector3d sur_pts[2][2][2];
   getSurroundPts(pos, sur_pts, diff);

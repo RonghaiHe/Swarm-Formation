@@ -46,10 +46,10 @@ namespace ego_planner
     enum TARGET_TYPE
     {
       MANUAL_TARGET = 1,
-      PRESET_TARGET ,
-      SWARM_MANUAL_TARGET 
+      PRESET_TARGET,
+      SWARM_MANUAL_TARGET
     };
-    
+
     /* planning utils */
     EGOPlannerManager::Ptr planner_manager_;
     PlanningVisualization::Ptr visualization_;
@@ -69,7 +69,7 @@ namespace ego_planner
     int last_end_id_;
     double replan_trajectory_time_;
 
-     // global goal setting for swarm
+    // global goal setting for swarm
     Eigen::Vector3d swarm_central_pos_;
     double swarm_relative_pts_[50][3];
     double swarm_scale_;
@@ -106,10 +106,10 @@ namespace ego_planner
     fstream result_file_;
     /* helper functions */
     bool callReboundReplan(bool flag_use_poly_init, bool flag_randomPolyTraj, bool use_formation); // front-end and back-end method
-    bool callEmergencyStop(Eigen::Vector3d stop_pos);                          // front-end and back-end method
+    bool callEmergencyStop(Eigen::Vector3d stop_pos);                                              // front-end and back-end method
     bool planFromGlobalTraj(const int trial_times = 1);
     bool planFromLocalTraj(bool flag_use_poly_init, bool use_formation);
-    
+
     /* return value: std::pair< Times of the same state be continuously called, current continuously called state > */
     void changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call);
     std::pair<int, EGOReplanFSM::FSM_EXEC_STATE> timesOfConsecutiveStateCalls();
@@ -119,25 +119,23 @@ namespace ego_planner
     // void getLocalTarget();
 
     /* ROS functions */
-    void execFSMCallback(const ros::TimerEvent &e);
-    void checkCollisionCallback(const ros::TimerEvent &e);
-    void waypointCallback(const geometry_msgs::PoseStampedPtr &msg);
-    void triggerCallback(const geometry_msgs::PoseStampedPtr &msg);
-    void odometryCallback(const nav_msgs::OdometryConstPtr &msg);
-    void RecvBroadcastPolyTrajCallback(const traj_utils::PolyTrajConstPtr &msg);
-    void polyTraj2ROSMsg(traj_utils::PolyTraj &msg);
-    void formationWaypointCallback(const geometry_msgs::PoseStampedPtr &msg);
+    void execFSMCallback(const ros::TimerEvent& e);
+    void checkCollisionCallback(const ros::TimerEvent& e);
+    void waypointCallback(const geometry_msgs::PoseStampedPtr& msg);
+    void triggerCallback(const geometry_msgs::PoseStampedPtr& msg);
+    void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
+    void RecvBroadcastPolyTrajCallback(const traj_utils::PolyTrajConstPtr& msg);
+    void polyTraj2ROSMsg(traj_utils::PolyTraj& msg);
+    void formationWaypointCallback(const geometry_msgs::PoseStampedPtr& msg);
     bool frontEndPathSearching();
     bool checkCollision();
 
   public:
-    EGOReplanFSM(/* args */)
-    {
-    }
+    EGOReplanFSM(/* args */) {}
     ~EGOReplanFSM();
 
 
-    void init(ros::NodeHandle &nh);
+    void init(ros::NodeHandle& nh);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };

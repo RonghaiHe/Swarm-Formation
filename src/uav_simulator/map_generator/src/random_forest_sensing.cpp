@@ -62,18 +62,18 @@ pcl::PointCloud<pcl::PointXYZ> cloudMap;
 sensor_msgs::PointCloud2 localMap_pcd;
 pcl::PointCloud<pcl::PointXYZ> clicked_cloud_;
 
-void GenerateWall(double x_l, double x_h, 
-                  double y_l, double y_h, 
-                  double z_l, double z_h, 
-                  pcl::PointCloud<pcl::PointXYZ>& cloudMap){
+void
+GenerateWall(double x_l, double x_h, double y_l, double y_h, double z_l, double z_h, pcl::PointCloud<pcl::PointXYZ>& cloudMap)
+{
   int x_num, y_num, z_num;
-  x_num = ceil((x_h - x_l)/_resolution);
-  y_num = ceil((y_h - y_l)/_resolution);
-  z_num = ceil((z_h - z_l)/_resolution);
+  x_num = ceil((x_h - x_l) / _resolution);
+  y_num = ceil((y_h - y_l) / _resolution);
+  z_num = ceil((z_h - z_l) / _resolution);
   pcl::PointXYZ pt;
-  for (int i=0; i<x_num; i++)
-    for (int j=0; j<y_num; j++)
-      for (int k=0; k<z_num; k++){
+  for (int i = 0; i < x_num; i++)
+    for (int j = 0; j < y_num; j++)
+      for (int k = 0; k < z_num; k++)
+      {
         pt.x = x_l + i * _resolution;
         pt.y = y_l + j * _resolution;
         pt.z = z_l + k * _resolution;
@@ -81,7 +81,8 @@ void GenerateWall(double x_l, double x_h,
       }
 }
 
-void RandomMapGenerate()
+void
+RandomMapGenerate()
 {
   pcl::PointXYZ pt_random;
 
@@ -139,8 +140,7 @@ void RandomMapGenerate()
 
     double theta = rand_theta_(eng);
     Eigen::Matrix3d rotate;
-    rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0,
-        1;
+    rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0, 1;
 
     double radius1 = rand_radius_(eng);
     double radius2 = rand_radius2_(eng);
@@ -159,8 +159,7 @@ void RandomMapGenerate()
         for (int ify = -0; ify <= 0; ++ify)
           for (int ifz = -0; ifz <= 0; ++ifz)
           {
-            cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution,
-                                           ifz * _resolution);
+            cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution, ifz * _resolution);
             cpt_if = rotate * cpt_if + Eigen::Vector3d(x, y, z);
             pt_random.x = cpt_if(0);
             pt_random.y = cpt_if(1);
@@ -181,7 +180,8 @@ void RandomMapGenerate()
   _map_ok = true;
 }
 
-void RandomMapGenerateCylinder()
+void
+RandomMapGenerateCylinder()
 {
   pcl::PointXYZ pt_random;
 
@@ -263,8 +263,7 @@ void RandomMapGenerateCylinder()
 
     double theta = rand_theta_(eng);
     Eigen::Matrix3d rotate;
-    rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0,
-        1;
+    rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0, 1;
 
     double radius1 = rand_radius_(eng);
     double radius2 = rand_radius2_(eng);
@@ -283,8 +282,7 @@ void RandomMapGenerateCylinder()
         for (int ify = -0; ify <= 0; ++ify)
           for (int ifz = -0; ifz <= 0; ++ifz)
           {
-            cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution,
-                                           ifz * _resolution);
+            cpt_if = cpt + Eigen::Vector3d(ifx * _resolution, ify * _resolution, ifz * _resolution);
             cpt_if = rotate * cpt_if + Eigen::Vector3d(x, y, z);
             pt_random.x = cpt_if(0);
             pt_random.y = cpt_if(1);
@@ -305,41 +303,43 @@ void RandomMapGenerateCylinder()
   _map_ok = true;
 }
 
-void FixMapGenerate(){
- 
+void
+FixMapGenerate()
+{
+
   switch (fix_obs_type_)
   {
-    case 0: // NONE_FIX
-    {
-      break;
-    }
-    
-    case 1: // WALL_WITH_HOLE
-    { 
-      double x_l, x_h, y_l, y_h, z_l, z_h;
-      x_l = -3.2;
-      x_h = 3.2;
-      y_l = - _y_size / 2;
-      y_h = -1.6;
-      z_l = -1.0;
-      z_h = _z_size;
-      GenerateWall(x_l, x_h, y_l, y_h, z_l, z_h, cloudMap);
-      x_l = -3.2;
-      x_h = 3.2;
-      y_l = 1.6;
-      y_h = _y_size / 2;
-      z_l = -1.0;
-      z_h = _z_size;
-      GenerateWall(x_l, x_h, y_l, y_h, z_l, z_h, cloudMap);
-      break;
-    }
+  case 0: // NONE_FIX
+  {
+    break;
+  }
 
+  case 1: // WALL_WITH_HOLE
+  {
+    double x_l, x_h, y_l, y_h, z_l, z_h;
+    x_l = -3.2;
+    x_h = 3.2;
+    y_l = -_y_size / 2;
+    y_h = -1.6;
+    z_l = -1.0;
+    z_h = _z_size;
+    GenerateWall(x_l, x_h, y_l, y_h, z_l, z_h, cloudMap);
+    x_l = -3.2;
+    x_h = 3.2;
+    y_l = 1.6;
+    y_h = _y_size / 2;
+    z_l = -1.0;
+    z_h = _z_size;
+    GenerateWall(x_l, x_h, y_l, y_h, z_l, z_h, cloudMap);
+    break;
+  }
   }
 
   ROS_WARN("Finished generate fixed map ");
 }
 
-void clickCallback(const geometry_msgs::PoseStamped &msg)
+void
+clickCallback(const geometry_msgs::PoseStamped& msg)
 {
   double x = msg.pose.position.x;
   double y = msg.pose.position.y;
@@ -380,7 +380,8 @@ void clickCallback(const geometry_msgs::PoseStamped &msg)
 }
 
 int i = 0;
-void pubPoints()
+void
+pubPoints()
 {
   while (ros::ok())
   {
@@ -388,13 +389,14 @@ void pubPoints()
     if (_map_ok)
       break;
   }
-  
+
   pcl::toROSMsg(cloudMap, globalMap_pcd);
   globalMap_pcd.header.frame_id = "world";
   _all_map_pub.publish(globalMap_pcd);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
   ros::init(argc, argv, "random_map_sensing");
   ros::NodeHandle n("~");
@@ -402,8 +404,7 @@ int main(int argc, char **argv)
   _local_map_pub = n.advertise<sensor_msgs::PointCloud2>("/map_generator/local_cloud", 1);
   _all_map_pub = n.advertise<sensor_msgs::PointCloud2>("/map_generator/global_cloud", 1);
 
-  click_map_pub_ =
-      n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
+  click_map_pub_ = n.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 1);
 
   n.param("map/x_size", _x_size, 50.0);
   n.param("map/y_size", _y_size, 50.0);
@@ -435,26 +436,25 @@ int main(int argc, char **argv)
 
   _obs_num = min(_obs_num, (int)_x_size * 10);
   _z_limit = _z_size;
-  
+
   ros::Duration(0.5).sleep();
-  
-  unsigned int seed = rd(); 
+
+  unsigned int seed = rd();
 
   cout << "seed = " << seed << " ~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~~!~" << endl;
   eng.seed(seed);
-  
+
   // RandomMapGenerate();  wait to debug
   RandomMapGenerateCylinder();
   // FixMapGenerate();
 
   ros::Rate loop_rate(_pub_rate);
-  
+
   // real map
   while (ros::ok())
   {
-    pubPoints();   
+    pubPoints();
     ros::spinOnce();
     loop_rate.sleep();
   }
-
 }

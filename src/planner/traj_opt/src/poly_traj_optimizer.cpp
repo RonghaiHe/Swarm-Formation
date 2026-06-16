@@ -4,10 +4,9 @@
 namespace ego_planner
 {
   /* main planning API */
-  bool PolyTrajOptimizer::OptimizeTrajectory_lbfgs(
-      const Eigen::MatrixXd &iniState, const Eigen::MatrixXd &finState,
-      const Eigen::MatrixXd &initInnerPts, const Eigen::VectorXd &initT,
-      Eigen::MatrixXd &optimal_points, const bool use_formation)
+  bool PolyTrajOptimizer::OptimizeTrajectory_lbfgs(const Eigen::MatrixXd& iniState, const Eigen::MatrixXd& finState,
+                                                   const Eigen::MatrixXd& initInnerPts, const Eigen::VectorXd& initT, Eigen::MatrixXd& optimal_points,
+                                                   const bool use_formation)
   {
     if (initInnerPts.cols() != (initT.size() - 1))
     {
@@ -61,15 +60,8 @@ namespace ego_planner
 
     t1 = ros::Time::now();
 
-    lbfgs::lbfgs_optimize(
-        variable_num_,
-        q,
-        &final_cost,
-        PolyTrajOptimizer::costFunctionCallback,
-        NULL,
-        PolyTrajOptimizer::earlyExitCallback,
-        this,
-        &lbfgs_params);
+    lbfgs::lbfgs_optimize(variable_num_, q, &final_cost, PolyTrajOptimizer::costFunctionCallback, NULL, PolyTrajOptimizer::earlyExitCallback, this,
+                          &lbfgs_params);
 
     // test collision
     bool occ = false;
@@ -98,24 +90,25 @@ namespace ego_planner
     /* check the safety of trajectory */
     double T_end;
     poly_traj::Trajectory traj = jerkOpt_.getTraj();
-    
+
     int N = traj.getPieceNum();
     int k = cps_num_prePiece_ * N + 1;
     int idx = k / 3 * 2;
     int piece_of_idx = floor((idx - 1) / cps_num_prePiece_);
     Eigen::VectorXd durations = traj.getDurations();
-    T_end = durations.head(piece_of_idx).sum() 
-            + durations(piece_of_idx) * (idx - piece_of_idx * cps_num_prePiece_) / cps_num_prePiece_;
+    T_end = durations.head(piece_of_idx).sum() + durations(piece_of_idx) * (idx - piece_of_idx * cps_num_prePiece_) / cps_num_prePiece_;
 
     bool occ = false;
     double dt = 0.01;
-    int i_end = floor(T_end/dt);
+    int i_end = floor(T_end / dt);
     double t = 0.0;
     collision_check_time_end_ = T_end;
 
-    for (int i=0; i<i_end; i++){
+    for (int i = 0; i < i_end; i++)
+    {
       Eigen::Vector3d pos = traj.getPos(t);
-      if(grid_map_->getInflateOccupancy(pos) == 1){
+      if (grid_map_->getInflateOccupancy(pos) == 1)
+      {
         occ = true;
         break;
       }
@@ -125,9 +118,9 @@ namespace ego_planner
   }
 
   /* callbacks by the L-BFGS optimizer */
-  double PolyTrajOptimizer::costFunctionCallback(void *func_data, const double *x, double *grad, const int n)
+  double PolyTrajOptimizer::costFunctionCallback(void* func_data, const double* x, double* grad, const int n)
   {
-    PolyTrajOptimizer *opt = reinterpret_cast<PolyTrajOptimizer *>(func_data);
+    PolyTrajOptimizer* opt = reinterpret_cast<PolyTrajOptimizer*>(func_data);
 
     opt->min_ellip_dist2_ = std::numeric_limits<double>::max();
 
@@ -159,38 +152,35 @@ namespace ego_planner
     return smoo_cost + obs_swarm_feas_qvar_costs.sum() + time_cost;
   }
 
-  int PolyTrajOptimizer::earlyExitCallback(void *func_data, const double *x, const double *g, const double fx, const double xnorm, const double gnorm, const double step, int n, int k, int ls)
+  int PolyTrajOptimizer::earlyExitCallback(void* func_data, const double* x, const double* g, const double fx, const double xnorm, const double gnorm,
+                                           const double step, int n, int k, int ls)
   {
-    PolyTrajOptimizer *opt = reinterpret_cast<PolyTrajOptimizer *>(func_data);
+    PolyTrajOptimizer* opt = reinterpret_cast<PolyTrajOptimizer*>(func_data);
     return (opt->force_stop_type_ == STOP_FOR_ERROR || opt->force_stop_type_ == STOP_FOR_REBOUND);
   }
 
   /* mappings between real world time and unconstrained virtual time */
   template <typename EIGENVEC>
-  void PolyTrajOptimizer::RealT2VirtualT(const Eigen::VectorXd &RT, EIGENVEC &VT)
+  void PolyTrajOptimizer::RealT2VirtualT(const Eigen::VectorXd& RT, EIGENVEC& VT)
   {
     for (int i = 0; i < RT.size(); ++i)
     {
-      VT(i) = RT(i) > 1.0 ? (sqrt(2.0 * RT(i) - 1.0) - 1.0)
-                          : (1.0 - sqrt(2.0 / RT(i) - 1.0));
+      VT(i) = RT(i) > 1.0 ? (sqrt(2.0 * RT(i) - 1.0) - 1.0) : (1.0 - sqrt(2.0 / RT(i) - 1.0));
     }
   }
 
   template <typename EIGENVEC>
-  void PolyTrajOptimizer::VirtualT2RealT(const EIGENVEC &VT, Eigen::VectorXd &RT)
+  void PolyTrajOptimizer::VirtualT2RealT(const EIGENVEC& VT, Eigen::VectorXd& RT)
   {
     for (int i = 0; i < VT.size(); ++i)
     {
-      RT(i) = VT(i) > 0.0 ? ((0.5 * VT(i) + 1.0) * VT(i) + 1.0)
-                          : 1.0 / ((0.5 * VT(i) - 1.0) * VT(i) + 1.0);
+      RT(i) = VT(i) > 0.0 ? ((0.5 * VT(i) + 1.0) * VT(i) + 1.0) : 1.0 / ((0.5 * VT(i) - 1.0) * VT(i) + 1.0);
     }
   }
 
   template <typename EIGENVEC, typename EIGENVECGD>
-  void PolyTrajOptimizer::VirtualTGradCost(
-      const Eigen::VectorXd &RT, const EIGENVEC &VT,
-      const Eigen::VectorXd &gdRT, EIGENVECGD &gdVT,
-      double &costT)
+  void PolyTrajOptimizer::VirtualTGradCost(const Eigen::VectorXd& RT, const EIGENVEC& VT, const Eigen::VectorXd& gdRT, EIGENVECGD& gdVT,
+                                           double& costT)
   {
     for (int i = 0; i < VT.size(); ++i)
     {
@@ -213,13 +203,13 @@ namespace ego_planner
 
   /* gradient and cost evaluation functions */
   template <typename EIGENVEC>
-  void PolyTrajOptimizer::initAndGetSmoothnessGradCost2PT(EIGENVEC &gdT, double &cost)
+  void PolyTrajOptimizer::initAndGetSmoothnessGradCost2PT(EIGENVEC& gdT, double& cost)
   {
     jerkOpt_.initGradCost(gdT, cost);
   }
 
   template <typename EIGENVEC>
-  void PolyTrajOptimizer::addPVAGradCost2CT(EIGENVEC &gdT, Eigen::VectorXd &costs, const int &K)
+  void PolyTrajOptimizer::addPVAGradCost2CT(EIGENVEC& gdT, Eigen::VectorXd& costs, const int& K)
   {
 
     int N = gdT.size();
@@ -236,11 +226,11 @@ namespace ego_planner
     costs.setZero();
     double t = 0;
     // Eigen::MatrixXd constrain_pts(3, N * K + 1);
-  
+
     // int innerLoop;
     for (int i = 0; i < N; ++i)
     {
-      const Eigen::Matrix<double, 6, 3> &c = jerkOpt_.get_b().block<6, 3>(i * 6, 0);
+      const Eigen::Matrix<double, 6, 3>& c = jerkOpt_.get_b().block<6, 3>(i * 6, 0);
       step = jerkOpt_.get_T1()(i) / K;
       s1 = 0.0;
       // innerLoop = K;
@@ -368,17 +358,10 @@ namespace ego_planner
       }
     }
     costs(5) += var;
-
   }
 
-  bool PolyTrajOptimizer::swarmGraphGradCostP(const int i_dp,
-                                              const double t,
-                                              const Eigen::Vector3d &p,
-                                              const Eigen::Vector3d &v,
-                                              Eigen::Vector3d &gradp,
-                                              double &gradt,
-                                              double &grad_prev_t,
-                                              double &costp)
+  bool PolyTrajOptimizer::swarmGraphGradCostP(const int i_dp, const double t, const Eigen::Vector3d& p, const Eigen::Vector3d& v,
+                                              Eigen::Vector3d& gradp, double& gradt, double& grad_prev_t, double& costp)
   {
     if (i_dp <= 0 || i_dp >= cps_.cp_size * 2 / 3)
       return false;
@@ -423,8 +406,7 @@ namespace ego_planner
       {
         double exceed_time = pt_time - (traj_i_satrt_time + swarm_trajs_->at(id).duration);
         swarm_v = swarm_trajs_->at(id).traj.getVel(swarm_trajs_->at(id).duration);
-        swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) +
-                  exceed_time * swarm_v;
+        swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) + exceed_time * swarm_v;
       }
       swarm_graph_pos[id] = swarm_p;
       swarm_graph_vel[id] = swarm_v;
@@ -457,10 +439,7 @@ namespace ego_planner
     return ret;
   }
 
-  bool PolyTrajOptimizer::obstacleGradCostP(const int i_dp,
-                                            const Eigen::Vector3d &p,
-                                            Eigen::Vector3d &gradp,
-                                            double &costp)
+  bool PolyTrajOptimizer::obstacleGradCostP(const int i_dp, const Eigen::Vector3d& p, Eigen::Vector3d& gradp, double& costp)
   {
     if (i_dp == 0 || i_dp >= cps_.cp_size * 2 / 3)
       return false;
@@ -487,14 +466,8 @@ namespace ego_planner
     return ret;
   }
 
-  bool PolyTrajOptimizer::swarmGradCostP(const int i_dp,
-                                         const double t,
-                                         const Eigen::Vector3d &p,
-                                         const Eigen::Vector3d &v,
-                                         Eigen::Vector3d &gradp,
-                                         double &gradt,
-                                         double &grad_prev_t,
-                                         double &costp)
+  bool PolyTrajOptimizer::swarmGradCostP(const int i_dp, const double t, const Eigen::Vector3d& p, const Eigen::Vector3d& v, Eigen::Vector3d& gradp,
+                                         double& gradt, double& grad_prev_t, double& costp)
   {
     if (i_dp <= 0 || i_dp >= cps_.cp_size * 2 / 3)
       return false;
@@ -532,8 +505,7 @@ namespace ego_planner
       {
         double exceed_time = pt_time - (traj_i_satrt_time + swarm_trajs_->at(id).duration);
         swarm_v = swarm_trajs_->at(id).traj.getVel(swarm_trajs_->at(id).duration);
-        swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) +
-                  exceed_time * swarm_v;
+        swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) + exceed_time * swarm_v;
       }
       Eigen::Vector3d dist_vec = p - swarm_p;
       double ellip_dist2 = dist_vec(2) * dist_vec(2) * inv_a2 + (dist_vec(0) * dist_vec(0) + dist_vec(1) * dist_vec(1)) * inv_b2;
@@ -547,7 +519,8 @@ namespace ego_planner
 
         costp += wei_swarm_ * dist2_err3;
 
-        Eigen::Vector3d dJ_dP = wei_swarm_ * 3 * dist2_err2 * (-2) * Eigen::Vector3d(inv_b2 * dist_vec(0), inv_b2 * dist_vec(1), inv_a2 * dist_vec(2));
+        Eigen::Vector3d dJ_dP =
+            wei_swarm_ * 3 * dist2_err2 * (-2) * Eigen::Vector3d(inv_b2 * dist_vec(0), inv_b2 * dist_vec(1), inv_a2 * dist_vec(2));
         gradp += dJ_dP;
         gradt += dJ_dP.dot(v - swarm_v);
         grad_prev_t += dJ_dP.dot(-swarm_v);
@@ -562,9 +535,7 @@ namespace ego_planner
     return ret;
   }
 
-  bool PolyTrajOptimizer::feasibilityGradCostV(const Eigen::Vector3d &v,
-                                               Eigen::Vector3d &gradv,
-                                               double &costv)
+  bool PolyTrajOptimizer::feasibilityGradCostV(const Eigen::Vector3d& v, Eigen::Vector3d& gradv, double& costv)
   {
     double vpen = v.squaredNorm() - max_vel_ * max_vel_;
     if (vpen > 0)
@@ -576,9 +547,7 @@ namespace ego_planner
     return false;
   }
 
-  bool PolyTrajOptimizer::feasibilityGradCostA(const Eigen::Vector3d &a,
-                                               Eigen::Vector3d &grada,
-                                               double &costa)
+  bool PolyTrajOptimizer::feasibilityGradCostA(const Eigen::Vector3d& a, Eigen::Vector3d& grada, double& costa)
   {
     double apen = a.squaredNorm() - max_acc_ * max_acc_;
     if (apen > 0)
@@ -590,9 +559,7 @@ namespace ego_planner
     return false;
   }
 
-  void PolyTrajOptimizer::distanceSqrVarianceWithGradCost2p(const Eigen::MatrixXd &ps,
-                                                            Eigen::MatrixXd &gdp,
-                                                            double &var)
+  void PolyTrajOptimizer::distanceSqrVarianceWithGradCost2p(const Eigen::MatrixXd& ps, Eigen::MatrixXd& gdp, double& var)
   {
     int N = ps.cols() - 1;
     Eigen::MatrixXd dps = ps.rightCols(N) - ps.leftCols(N);
@@ -618,11 +585,8 @@ namespace ego_planner
     return;
   }
 
-  void PolyTrajOptimizer::astarWithMinTraj(const Eigen::MatrixXd &iniState,
-                                           const Eigen::MatrixXd &finState,
-                                           vector<Eigen::Vector3d> &simple_path,
-                                           Eigen::MatrixXd &ctl_points,
-                                           poly_traj::MinJerkOpt &frontendMJ)
+  void PolyTrajOptimizer::astarWithMinTraj(const Eigen::MatrixXd& iniState, const Eigen::MatrixXd& finState, vector<Eigen::Vector3d>& simple_path,
+                                           Eigen::MatrixXd& ctl_points, poly_traj::MinJerkOpt& frontendMJ)
   {
     Eigen::Vector3d start_pos = iniState.col(0);
     Eigen::Vector3d end_pos = finState.col(0);
@@ -658,8 +622,7 @@ namespace ego_planner
     {
       for (int i = 1; i <= piece_num; ++i)
       {
-        time_vec(i - 1) = (i == 1) ? (simple_path[1] - start_pos).norm() / des_vel
-                                   : (simple_path[i] - simple_path[i - 1]).norm() / des_vel;
+        time_vec(i - 1) = (i == 1) ? (simple_path[1] - start_pos).norm() / des_vel : (simple_path[i] - simple_path[i - 1]).norm() / des_vel;
       }
       frontendMJ.generate(innerPts, time_vec);
       debug_num++;
@@ -672,7 +635,7 @@ namespace ego_planner
     ctl_points = frontendMJ.getInitConstrainPoints(cps_num_prePiece_);
   }
 
-  bool PolyTrajOptimizer::getFormationPos(vector<Eigen::Vector3d> &swarm_graph_pos, Eigen::Vector3d pos)
+  bool PolyTrajOptimizer::getFormationPos(vector<Eigen::Vector3d>& swarm_graph_pos, Eigen::Vector3d pos)
   {
     if (swarm_trajs_->size() < (size_t)formation_size_ || !use_formation_)
     {
@@ -701,8 +664,7 @@ namespace ego_planner
         {
           double exceed_time = pt_time - (traj_i_satrt_time + swarm_trajs_->at(id).duration);
           swarm_v = swarm_trajs_->at(id).traj.getVel(swarm_trajs_->at(id).duration);
-          swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) +
-                    exceed_time * swarm_v;
+          swarm_p = swarm_trajs_->at(id).traj.getPos(swarm_trajs_->at(id).duration) + exceed_time * swarm_v;
         }
         swarm_graph_pos[id] = swarm_p;
       }
@@ -732,7 +694,7 @@ namespace ego_planner
   }
 
   /* helper functions */
-  void PolyTrajOptimizer::setParam(ros::NodeHandle &nh)
+  void PolyTrajOptimizer::setParam(ros::NodeHandle& nh)
   {
     nh.param("optimization/constrain_points_perPiece", cps_num_prePiece_, -1);
     nh.param("optimization/weight_obstacle", wei_obs_, -1.0);
@@ -753,7 +715,7 @@ namespace ego_planner
     setDesiredFormation(formation_type_);
   }
 
-  void PolyTrajOptimizer::setEnvironment(const GridMap::Ptr &map)
+  void PolyTrajOptimizer::setEnvironment(const GridMap::Ptr& map)
   {
     grid_map_ = map;
 
@@ -761,16 +723,20 @@ namespace ego_planner
     a_star_->initGridMap(grid_map_, Eigen::Vector3i(800, 200, 40));
   }
 
-  void PolyTrajOptimizer::setControlPoints(const Eigen::MatrixXd &points)
+  void PolyTrajOptimizer::setControlPoints(const Eigen::MatrixXd& points)
   {
     cps_.resize_cp(points.cols());
     cps_.points = points;
   }
 
-  void PolyTrajOptimizer::setSwarmTrajs(SwarmTrajData *swarm_trajs_ptr) { swarm_trajs_ = swarm_trajs_ptr; }
+  void PolyTrajOptimizer::setSwarmTrajs(SwarmTrajData* swarm_trajs_ptr)
+  {
+    swarm_trajs_ = swarm_trajs_ptr;
+  }
 
   void PolyTrajOptimizer::setDroneId(const int drone_id)
   {
-    drone_id_ = drone_id;}
+    drone_id_ = drone_id;
+  }
 
 }

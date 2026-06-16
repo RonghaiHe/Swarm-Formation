@@ -16,10 +16,10 @@ optimizeMap(mocka::Maps::BasicInfo& in)
 {
   std::vector<int>* temp = new std::vector<int>;
 
-  pcl::KdTreeFLANN<pcl::PointXYZ>     kdtree;
+  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-  cloud->width  = in.cloud->width;
+  cloud->width = in.cloud->width;
   cloud->height = in.cloud->height;
   cloud->points.resize(cloud->width * cloud->height);
 
@@ -35,19 +35,17 @@ optimizeMap(mocka::Maps::BasicInfo& in)
 
   for (uint32_t i = 0; i < cloud->width; i++)
   {
-    std::vector<int>   pointIdxRadiusSearch;
+    std::vector<int> pointIdxRadiusSearch;
     std::vector<float> pointRadiusSquaredDistance;
 
-    if (kdtree.radiusSearch(cloud->points[i], radius, pointIdxRadiusSearch,
-                            pointRadiusSquaredDistance) >= 27)
+    if (kdtree.radiusSearch(cloud->points[i], radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) >= 27)
     {
       temp->push_back(i);
     }
   }
   for (int i = temp->size() - 1; i >= 0; i--)
   {
-    in.cloud->points.erase(in.cloud->points.begin() +
-                           temp->at(i)); // erasing the enclosed points
+    in.cloud->points.erase(in.cloud->points.begin() + temp->at(i)); // erasing the enclosed points
   }
   in.cloud->width -= temp->size();
 
@@ -65,10 +63,9 @@ main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
 
-  ros::Publisher pcl_pub =
-    nh.advertise<sensor_msgs::PointCloud2>("mock_map", 1);
+  ros::Publisher pcl_pub = nh.advertise<sensor_msgs::PointCloud2>("mock_map", 1);
   pcl::PointCloud<pcl::PointXYZ> cloud;
-  sensor_msgs::PointCloud2       output;
+  sensor_msgs::PointCloud2 output;
   // Fill in the cloud data
 
   int seed;
@@ -98,13 +95,13 @@ main(int argc, char** argv)
 
   mocka::Maps::BasicInfo info;
   info.nh_private = &nh_private;
-  info.sizeX      = sizeX;
-  info.sizeY      = sizeY;
-  info.sizeZ      = sizeZ;
-  info.seed       = seed;
-  info.scale      = scale;
-  info.output     = &output;
-  info.cloud      = &cloud;
+  info.sizeX = sizeX;
+  info.sizeY = sizeY;
+  info.sizeZ = sizeZ;
+  info.seed = seed;
+  info.scale = scale;
+  info.output = &output;
+  info.cloud = &cloud;
 
   mocka::Maps map;
   map.setInfo(info);

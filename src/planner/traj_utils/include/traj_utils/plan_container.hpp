@@ -48,13 +48,10 @@ namespace ego_planner
     LocalTrajData local_traj;
     SwarmTrajData swarm_traj;
 
-    TrajContainer()
-    {
-      local_traj.traj_id = 0;
-    }
+    TrajContainer() { local_traj.traj_id = 0; }
     ~TrajContainer() {}
 
-    void setGlobalTraj(const poly_traj::Trajectory &trajectory, const double &world_time)
+    void setGlobalTraj(const poly_traj::Trajectory& trajectory, const double& world_time)
     {
       global_traj.traj = trajectory;
       global_traj.duration = trajectory.getTotalDuration();
@@ -67,7 +64,7 @@ namespace ego_planner
       local_traj.traj_id = 0;
     }
 
-    void setLocalTraj(const poly_traj::Trajectory &trajectory, const double &world_time, const int drone_id = -1)
+    void setLocalTraj(const poly_traj::Trajectory& trajectory, const double& world_time, const int drone_id = -1)
     {
       local_traj.drone_id = drone_id;
       local_traj.traj_id++;
@@ -76,7 +73,6 @@ namespace ego_planner
       local_traj.start_time = world_time;
       local_traj.traj = trajectory;
     }
-
   };
 
   struct PlanParameters

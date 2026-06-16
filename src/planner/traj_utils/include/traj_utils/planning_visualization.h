@@ -42,8 +42,8 @@ namespace ego_planner
 
     enum FORMATION_TYPE
     {
-      NONE_FORMATION        = 0,
-      REGULAR_HEXAGON       = 1
+      NONE_FORMATION = 0,
+      REGULAR_HEXAGON = 1
     };
 
     int drone_id_;
@@ -51,8 +51,8 @@ namespace ego_planner
     int formation_size_, line_size_;
     std::vector<int> line_begin_, line_end_;
     bool start_visual_;
-    
-    ros::Subscriber drone_0_odom_sub_, drone_1_odom_sub_, drone_2_odom_sub_, drone_3_odom_sub_; 
+
+    ros::Subscriber drone_0_odom_sub_, drone_1_odom_sub_, drone_2_odom_sub_, drone_3_odom_sub_;
     ros::Subscriber drone_4_odom_sub_, drone_5_odom_sub_, drone_6_odom_sub_, drone_7_odom_sub_;
     ros::Subscriber drone_8_odom_sub_, drone_9_odom_sub_, drone_10_odom_sub_, drone_11_odom_sub_;
 
@@ -65,41 +65,44 @@ namespace ego_planner
 
     std::vector<Eigen::Vector3d> swarm_odom;
 
-    void drone_0_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_1_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_2_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_3_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_4_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_5_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_6_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_7_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_8_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_9_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_10_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    void drone_11_odomeCallback(const nav_msgs::OdometryConstPtr &msg);
-    
-    void swarmGraphVisulCallback(const ros::TimerEvent &e);
-    void benchmarkCallback(const ros::TimerEvent &e);
+    void drone_0_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_1_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_2_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_3_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_4_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_5_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_6_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_7_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_8_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_9_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_10_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+    void drone_11_odomeCallback(const nav_msgs::OdometryConstPtr& msg);
+
+    void swarmGraphVisulCallback(const ros::TimerEvent& e);
+    void benchmarkCallback(const ros::TimerEvent& e);
 
   public:
-
     PlanningVisualization(/* args */) {}
-    ~PlanningVisualization() { 
-      if (drone_id_ == 1){ odom_csv.close(); }
-     }
+    ~PlanningVisualization()
+    {
+      if (drone_id_ == 1)
+      {
+        odom_csv.close();
+      }
+    }
 
-    PlanningVisualization(ros::NodeHandle &nh);
+    PlanningVisualization(ros::NodeHandle& nh);
 
     typedef std::shared_ptr<PlanningVisualization> Ptr;
 
     void initSwarmGraphVisual();
 
-    void displayMarkerList(ros::Publisher &pub, const vector<Eigen::Vector3d> &list, double scale,
-                           Eigen::Vector4d color, int id,  bool show_sphere = true);
-    void generatePathDisplayArray(visualization_msgs::MarkerArray &array,
-                                  const vector<Eigen::Vector3d> &list, double scale, Eigen::Vector4d color, int id);
-    void generateArrowDisplayArray(visualization_msgs::MarkerArray &array,
-                                   const vector<Eigen::Vector3d> &list, double scale, Eigen::Vector4d color, int id);
+    void displayMarkerList(ros::Publisher& pub, const vector<Eigen::Vector3d>& list, double scale, Eigen::Vector4d color, int id,
+                           bool show_sphere = true);
+    void generatePathDisplayArray(visualization_msgs::MarkerArray& array, const vector<Eigen::Vector3d>& list, double scale, Eigen::Vector4d color,
+                                  int id);
+    void generateArrowDisplayArray(visualization_msgs::MarkerArray& array, const vector<Eigen::Vector3d>& list, double scale, Eigen::Vector4d color,
+                                   int id);
     void displayGoalPoint(Eigen::Vector3d goal_point, Eigen::Vector4d color, const double scale, int id);
     void displayGlobalPathList(vector<Eigen::Vector3d> global_pts, const double scale, int id);
     void displayInitPathList(vector<Eigen::Vector3d> init_pts, const double scale, int id);
@@ -107,11 +110,11 @@ namespace ego_planner
     void displayOptimalList(Eigen::MatrixXd optimal_pts, int id);
     void displayFailedList(Eigen::MatrixXd failed_pts, int id);
     void displayAStarList(std::vector<std::vector<Eigen::Vector3d>> a_star_paths, int id);
-    void displayArrowList(ros::Publisher &pub, const vector<Eigen::Vector3d> &list, double scale, Eigen::Vector4d color, int id);
+    void displayArrowList(ros::Publisher& pub, const vector<Eigen::Vector3d>& list, double scale, Eigen::Vector4d color, int id);
     void displayInitPathListDebug(vector<Eigen::Vector3d> init_pts, const double scale, int id);
 
-    void displayIntermediatePt(std::string type, Eigen::MatrixXd &pts, int id, Eigen::Vector4d color);
-    void displayIntermediateGrad(std::string type, Eigen::MatrixXd &pts, Eigen::MatrixXd &grad, int id, Eigen::Vector4d color);
+    void displayIntermediatePt(std::string type, Eigen::MatrixXd& pts, int id, Eigen::Vector4d color);
+    void displayIntermediateGrad(std::string type, Eigen::MatrixXd& pts, Eigen::MatrixXd& grad, int id, Eigen::Vector4d color);
     // void displayNewArrow(ros::Publisher& guide_vector_pub, ego_planner::PolyTrajOptimizer::Ptr optimizer);
   };
 } // namespace ego_planner

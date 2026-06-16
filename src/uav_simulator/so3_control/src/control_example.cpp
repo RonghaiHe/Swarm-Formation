@@ -2,7 +2,8 @@
 #include <quadrotor_msgs/PositionCommand.h>
 #include <ros/ros.h>
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
 
   ros::init(argc, argv, "quad_sim_example");
@@ -71,7 +72,6 @@ int main(int argc, char **argv)
       ros::Duration(0.01).sleep();
       ros::spinOnce();
     }
-
   }
 
   return 0;
